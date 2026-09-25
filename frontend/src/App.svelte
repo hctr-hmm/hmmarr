@@ -1,8 +1,21 @@
 <script>
   import { onMount } from 'svelte';
-  import { route, authStatus, isAuthenticated, navigate } from './lib/stores.js';
+  import { route, authStatus, navigate } from './lib/stores.js';
   import { api } from './lib/api.js';
+  import Layout from './lib/Layout.svelte';
+  import ComingSoon from './lib/ComingSoon.svelte';
   import Login from './routes/Login.svelte';
+  import Dashboard from './routes/Dashboard.svelte';
+
+  const ROUTES = {
+    dashboard: { component: Dashboard, title: '' },
+    movies:    { component: ComingSoon, title: 'Movies' },
+    series:    { component: ComingSoon, title: 'Series' },
+    queue:     { component: ComingSoon, title: 'Queue' },
+    calendar:  { component: ComingSoon, title: 'Calendar' },
+    prowlarr:  { component: ComingSoon, title: 'Indexers' },
+    bazarr:    { component: ComingSoon, title: 'Subtitles' },
+  };
 
   // Bootstrap: check auth status on load
   onMount(async () => {
@@ -19,6 +32,8 @@
       navigate('login');
     }
   });
+
+  const current = $derived(ROUTES[$route] ?? ROUTES.dashboard);
 </script>
 
 <svelte:head>
@@ -33,11 +48,9 @@
 {:else if $route === 'login'}
   <Login />
 {:else}
-  <!-- Shell + page router will go here once layout is built -->
-  <div class="placeholder">
-    <span class="wordmark">hmmarr</span>
-    <p class="note">Logged in ✓ — dashboard coming next</p>
-  </div>
+  <Layout>
+    <current.component title={current.title} />
+  </Layout>
 {/if}
 
 <style>
@@ -92,14 +105,14 @@
     border-radius: var(--radius-sm);
   }
   :global(::selection) { background: color-mix(in oklch, var(--accent) 30%, transparent); }
-  :global(@media (prefers-reduced-motion: reduce)) {
+  @media (prefers-reduced-motion: reduce) {
     :global(*, *::before, *::after) {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
   }
 
-  .splash, .placeholder {
+  .splash {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -112,9 +125,5 @@
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--accent);
-  }
-  .note {
-    font-size: var(--text-sm);
-    color: var(--text-muted);
   }
 </style>
