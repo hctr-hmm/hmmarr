@@ -6,10 +6,11 @@
   import ComingSoon from './lib/ComingSoon.svelte';
   import Login from './routes/Login.svelte';
   import Dashboard from './routes/Dashboard.svelte';
+  import Movies from './routes/Movies.svelte';
 
   const ROUTES = {
     dashboard: { component: Dashboard, title: '' },
-    movies:    { component: ComingSoon, title: 'Movies' },
+    movies:    { component: Movies, title: '' },
     series:    { component: ComingSoon, title: 'Series' },
     queue:     { component: ComingSoon, title: 'Queue' },
     calendar:  { component: ComingSoon, title: 'Calendar' },
