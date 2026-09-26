@@ -10,10 +10,13 @@
     { name: 'bazarr', label: 'Bazarr', route: 'bazarr' },
     { name: 'prowlarr', label: 'Prowlarr', route: 'prowlarr' },
     { name: 'qbittorrent', label: 'qBittorrent', route: 'qbittorrent' },
-    { name: 'seerr', label: 'Seerr', route: 'seerr' }
+    { name: 'seerr', label: 'Seerr', route: 'seerr' },
+    { name: 'jellyfin', label: 'Jellyfin', route: 'jellyfin' }
   ];
 
+  /** @type {Record<string, any>} */
   let health = $derived($serviceHealth);
+  /** @type {Record<string, any>} */
   let details = $state({});
   let refreshing = $state(false);
   let loaded = $state(false);
@@ -84,6 +87,9 @@
     if (name === 'seerr') return {
       counts: ['/api/v1/request/count']
     };
+    if (name === 'jellyfin') return {
+      sessions: ['/api/jellyfin/now-watching']
+    };
     return {
       indexers: ['/api/v1/indexer'],
       failing: ['/api/v1/indexerstatus'],
@@ -93,7 +99,7 @@
 
   function summarize(name, data, partial) {
     const healthResponse = data.health?.data ?? data.health;
-    const issues = name === 'qbittorrent' || name === 'seerr' ? [] : Array.isArray(healthResponse) ? [...healthResponse] : [{ type: 'warning', message: 'Health information could not be loaded.' }];
+    const issues = ['qbittorrent', 'seerr', 'jellyfin'].includes(name) ? [] : Array.isArray(healthResponse) ? [...healthResponse] : [{ type: 'warning', message: 'Health information could not be loaded.' }];
     const providerList = data.providers?.data;
     if (name === 'bazarr' && Array.isArray(providerList)) {
       for (const provider of providerList.filter((item) => item.status !== 'Good')) {
@@ -154,6 +160,13 @@
         { label: 'Pending', value: count(counts?.pending), route: 'seerr', section: { tab: 'requests', filter: 'pending' } },
         { label: 'Approved', value: count(counts?.approved), route: 'seerr', section: { tab: 'requests', filter: 'approved' } }
       );
+    } else if (name === 'jellyfin') {
+      const sessions = Array.isArray(data.sessions) ? data.sessions : null;
+      metrics.push(
+        { label: 'Watching', value: sessions?.length ?? null, route: 'jellyfin' },
+        { label: 'Playing', value: sessions?.filter((session) => !session.paused).length ?? null, route: 'jellyfin' },
+        { label: 'Paused', value: sessions?.filter((session) => session.paused).length ?? null, route: 'jellyfin' }
+      );
     } else {
       const indexers = Array.isArray(data.indexers) ? data.indexers : null;
       metrics.push(
@@ -163,7 +176,7 @@
       );
     }
 
-    return { metrics, health: issues, upcoming: events, partial, calendarLoaded: Array.isArray(data.calendar) };
+    return { metrics, health: issues, upcoming: events, partial, calendarLoaded: Array.isArray(data.calendar), sessions: name === 'jellyfin' && Array.isArray(data.sessions) ? data.sessions : [] };
   }
 
   async function loadDetails(name) {
@@ -171,7 +184,7 @@
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15_000);
     try {
-      const results = await Promise.allSettled(entries.map(([, [path, params]]) => name === 'qbittorrent' ? api.get(path) : api.proxy.get(name, path, params, controller.signal)));
+      const results = await Promise.allSettled(entries.map(([, [path, params]]) => ['qbittorrent', 'jellyfin'].includes(name) ? api.get(path) : api.proxy.get(name, path, params, controller.signal)));
       const data = {};
       entries.forEach(([key], index) => {
         data[key] = results[index].status === 'fulfilled' ? results[index].value : null;
@@ -302,6 +315,15 @@
     </div>
   </section>
 
+  <section class="panel now-watching" aria-labelledby="watching-heading">
+    <div class="panel-head"><div><h2 id="watching-heading">Now watching</h2><p>Current playback on Jellyfin</p></div><button onclick={() => navigate('jellyfin')}>Open Jellyfin <span aria-hidden="true">→</span></button></div>
+    {#if health.jellyfin?.unconfigured}<p class="empty">Connect Jellyfin to see current playback.</p>
+    {:else if health.jellyfin && !health.jellyfin.online && !health.jellyfin.loading}<p class="empty">Jellyfin is unavailable.</p>
+    {:else if !details.jellyfin}<p class="empty">Checking current playback…</p>
+    {:else if !details.jellyfin.sessions.length}<p class="empty">Nobody is watching right now.</p>
+    {:else}<div class="watch-list">{#each details.jellyfin.sessions.slice(0, 4) as session, index (session.userName + index)}<div class="watch-row"><div><strong>{session.item.name}</strong><span>{session.userName} · {session.item.seriesName || session.item.type || 'Video'} · {session.paused ? 'Paused' : 'Playing'}</span></div><span>{session.durationSeconds ? Math.round(session.positionSeconds / session.durationSeconds * 100) : 0}%</span></div>{/each}</div>{/if}
+  </section>
+
   <div class="lower-grid">
     <section class="panel" aria-labelledby="attention-heading">
       <div class="panel-head">
@@ -401,9 +423,15 @@
   .issue-dot { width: 7px; height: 7px; margin-top: 7px; flex-shrink: 0; border-radius: 50%; background: var(--orange); }
   .issue-dot.critical { background: var(--red); }
   .more { padding-top: 8px; color: var(--text-muted); font-size: var(--text-xs); }
+  .now-watching { gap: var(--space-3); }
+  .watch-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-5); }
+  .watch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 0; border-top: 1px solid var(--border); }
+  .watch-row > div { min-width: 0; display: grid; gap: 3px; }
+  .watch-row strong { color: var(--text); font-size: var(--text-sm); overflow-wrap: anywhere; }
+  .watch-row span { color: var(--text-muted); font-size: var(--text-xs); }
   .event-row { width: 100%; align-items: center; background: none; border-right: 0; border-bottom: 0; border-left: 0; color: var(--text-muted); text-align: left; }
   .event-row:hover strong { color: var(--accent); }
   .event-date { flex: 0 0 78px; color: var(--accent); font-size: var(--text-xs); font-weight: 700; }
-  @media (max-width: 860px) { .grid, .lower-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) { .grid, .lower-grid, .watch-list { grid-template-columns: 1fr; } }
   @media (max-width: 470px) { .page-head, .section-head { flex-direction: column; align-items: flex-start; } .metrics { gap: 5px; } .metric { padding: 8px; } .event-date { flex-basis: 66px; } }
 </style>

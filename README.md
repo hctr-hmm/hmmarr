@@ -4,8 +4,11 @@ A single web interface for Radarr, Sonarr, Bazarr, Prowlarr, qBittorrent, and Se
 
 ## Run with Docker Compose
 
+Jellyfin's **Now watching** page and dashboard panel show active viewers, playback progress, client devices, and whether playback is paused or transcoding. Jellyfin remains read-only in Hmmarr.
+
 1. Create a root `.env` file with `POSTGRES_PASSWORD`, `HMMARR_SESSION_SECRET` (at least 32 characters), and `HMMARR_BOOTSTRAP_PASS` (at least 8 characters). `HMMARR_BOOTSTRAP_USER` defaults to `admin`. Generate secrets with `openssl rand -base64 32`.
 2. Add the API keys for the media services you use: `RADARR_API_KEY`, `SONARR_API_KEY`, `BAZARR_API_KEY`, and `PROWLARR_API_KEY`. A missing key leaves that service unconfigured. To connect qBittorrent, set `QBITTORRENT_URL=http://qbittorrent:8081` and either `QBITTORRENT_API_KEY` (qBittorrent 5.2+) or both `QBITTORRENT_USERNAME` and `QBITTORRENT_PASSWORD`. To connect Seerr, set `SEERR_API_KEY`; `SEERR_URL` defaults to `http://seerr:5055` in Docker Compose.
+   To show Jellyfin playback, set `JELLYFIN_API_KEY` from Jellyfin's Dashboard → API Keys. Compose uses `http://host.docker.internal:8096` by default because this Jellyfin instance uses host networking; set `JELLYFIN_URL` if yours differs.
 3. Set `MEDIA_NETWORK` to the Docker network shared by the media services. It defaults to `compose_default`. The service names in `docker-compose.yml` must resolve on that network; set `RADARR_URL`, `SONARR_URL`, `BAZARR_URL`, or `PROWLARR_URL` in `.env` if yours differ.
 4. Run `docker compose up -d --build` and open port 3110 on this host. Sign in with the bootstrap credentials. Remove `HMMARR_BOOTSTRAP_PASS` from `.env` after the first user has been created.
 

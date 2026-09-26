@@ -11,6 +11,7 @@ import { getPool, migrate, findUserByUsername, findUserById, createUser, listUse
 import { buildTarget, probeService, proxyRequest } from './proxy.js';
 import { createPosterHandler } from './posters.js';
 import { createQbittorrentClient } from './qbittorrent.js';
+import { getNowWatching, getJellyfinImage } from './jellyfin.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 const STATIC_DIR = fileURLToPath(new URL('../static/', import.meta.url));
@@ -146,7 +147,7 @@ export function createAppServer(config, pool) {
       if (request.method === 'GET' && pathname === '/api/services')
         return sendJson(response, 200, Object.values(config.services).map(publicService));
 
-      const statusMatch = pathname.match(/^\/api\/services\/(radarr|sonarr|bazarr|prowlarr|qbittorrent|seerr)\/status$/);
+      const statusMatch = pathname.match(/^\/api\/services\/(radarr|sonarr|bazarr|prowlarr|qbittorrent|seerr|jellyfin)\/status$/);
       if (request.method === 'GET' && statusMatch) {
         const service = config.services[statusMatch[1]];
         if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
@@ -235,6 +236,25 @@ export function createAppServer(config, pool) {
         } catch (cause) {
           return sendJson(response, cause.name === 'TimeoutError' ? 504 : 502, { error: cause.name === 'TimeoutError' ? 'upstream_timeout' : 'upstream_unavailable', requestId });
         }
+      }
+
+      if (request.method === 'GET' && pathname === '/api/jellyfin/now-watching') {
+        const service = config.services.jellyfin;
+        if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
+        try { return sendJson(response, 200, await getNowWatching(service, config.statusTimeoutMs)); }
+        catch (cause) { return sendJson(response, cause.name === 'TimeoutError' ? 504 : 502, { error: 'jellyfin_unavailable', requestId }); }
+      }
+
+      const jellyfinImage = pathname.match(/^\/api\/jellyfin\/images\/([a-fA-F0-9-]{32,36})$/);
+      if (request.method === 'GET' && jellyfinImage) {
+        const service = config.services.jellyfin;
+        if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
+        try {
+          const image = await getJellyfinImage(service, jellyfinImage[1], config.statusTimeoutMs);
+          if (!image) return sendJson(response, 404, { error: 'image_not_found', requestId });
+          response.writeHead(200, { 'content-type': image.contentType, 'cache-control': 'private, max-age=300' });
+          return response.end(image.data);
+        } catch { return sendJson(response, 502, { error: 'jellyfin_unavailable', requestId }); }
       }
 
       // ── Proxy ─────────────────────────────────────────────────────────────────

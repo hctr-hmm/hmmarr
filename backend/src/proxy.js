@@ -100,7 +100,7 @@ export async function probeService(service, timeoutMs) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const body = await response.json();
     const data = body?.data ?? body;
-    return { name: service.name, label: service.label, online: true, version: data?.version || data?.bazarr_version || null, appName: data?.appName || service.label, latencyMs: Math.round(performance.now() - started) };
+    return { name: service.name, label: service.label, online: true, version: data?.version || data?.Version || data?.bazarr_version || null, appName: data?.appName || service.label, latencyMs: Math.round(performance.now() - started) };
   } catch (error) {
     return { name: service.name, label: service.label, online: false, error: error?.name === 'AbortError' ? 'timeout' : 'unreachable', latencyMs: Math.round(performance.now() - started) };
   } finally { clearTimeout(timeout); }

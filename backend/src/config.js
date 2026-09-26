@@ -4,6 +4,7 @@ const SERVICE_DEFINITIONS = Object.freeze({
   bazarr:   { label: 'Bazarr',   apiVersion: 'v1', statusPath: '/api/system/status',    keyHeader: 'X-API-KEY' },
   prowlarr: { label: 'Prowlarr', apiVersion: 'v1', statusPath: '/api/v1/system/status', keyHeader: 'X-Api-Key' },
   seerr:    { label: 'Seerr',    apiVersion: 'v1', statusPath: '/api/v1/status', keyHeader: 'X-Api-Key' },
+  jellyfin: { label: 'Jellyfin', apiVersion: 'v1', statusPath: '/System/Info/Public', keyHeader: 'X-Emby-Token' },
 });
 
 function parseInteger(value, fallback, name, minimum, maximum) {

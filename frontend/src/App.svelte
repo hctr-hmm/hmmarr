@@ -20,6 +20,7 @@
   import Indexers from './routes/Indexers.svelte';
   import Torrents from './routes/Torrents.svelte';
   import Seerr from './routes/Seerr.svelte';
+  import NowWatching from './routes/NowWatching.svelte';
 
   const ROUTES = {
     dashboard: { component: Dashboard, title: '' },
@@ -37,6 +38,7 @@
     prowlarr:  { component: Indexers, title: '' },
     qbittorrent: { component: Torrents, title: '' },
     seerr:    { component: Seerr, title: '' },
+    jellyfin: { component: NowWatching, title: '' },
     bazarr:    { component: Subtitles, title: '' },
   };
 

@@ -73,6 +73,7 @@ test('health endpoint is public', async () => {
 test('protected endpoints reject unauthenticated requests', async () => {
   assert.equal((await fetch(`${baseUrl}/api/services`)).status, 401);
   assert.equal((await fetch(`${baseUrl}/api/posters/radarr/138.jpg`)).status, 401);
+  assert.equal((await fetch(`${baseUrl}/api/jellyfin/now-watching`)).status, 401);
 });
 
 test('login creates a usable HttpOnly session', async () => {

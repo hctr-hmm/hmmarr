@@ -9,7 +9,8 @@
     { name: 'bazarr', label: 'Bazarr', base: '/api', diskSpace: false },
     { name: 'prowlarr', label: 'Prowlarr', base: '/api/v1', diskSpace: false },
     { name: 'qbittorrent', label: 'qBittorrent', base: '/api/v2', diskSpace: false },
-    { name: 'seerr', label: 'Seerr', base: '/api/v1', diskSpace: false }
+    { name: 'seerr', label: 'Seerr', base: '/api/v1', diskSpace: false },
+    { name: 'jellyfin', label: 'Jellyfin', base: '/', diskSpace: false }
   ];
 
   let serviceData = $state({});
@@ -41,6 +42,21 @@
 
   async function loadService(service, configured) {
     if (!configured) return { unconfigured: true };
+
+    if (service.name === 'jellyfin') {
+      try {
+        const [status, sessions] = await Promise.all([
+          api.serviceStatus('jellyfin'),
+          api.get('/api/jellyfin/now-watching')
+        ]);
+        return { fields: [
+          ['Version', status.version || '—'],
+          ['Current viewers', sessions.length],
+          ['Playing', sessions.filter((session) => !session.paused).length],
+          ['Paused', sessions.filter((session) => session.paused).length]
+        ], health: [], healthError: '', disks: [], diskError: '' };
+      } catch (cause) { return { offline: true, error: errorMessage(cause) }; }
+    }
 
     if (service.name === 'seerr') {
       try {
@@ -156,7 +172,7 @@
             {#if data.healthError}
               <p class="rad-error" role="alert">Could not load health: {data.healthError}</p>
             {:else if data.health.length === 0}
-              <p class="rad-success">{service.name === 'qbittorrent' || service.name === 'seerr' ? 'Connection details are shown above.' : 'No health issues reported.'}</p>
+              <p class="rad-success">{['qbittorrent', 'seerr', 'jellyfin'].includes(service.name) ? 'Connection details are shown above.' : 'No health issues reported.'}</p>
             {:else}
               <div class="rad-list">
                 {#each data.health as item, index (item.source + '-' + index)}
