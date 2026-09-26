@@ -81,25 +81,25 @@
 <style>
   :global(*, *::before, *::after) { box-sizing: border-box; margin: 0; padding: 0; }
   :global(:root) {
-    --bg:             #0b0f16;
-    --surface:        #151b25;
-    --surface-2:      #1b2430;
-    --surface-3:      #263242;
-    --border:         #293443;
-    --border-subtle:  #354354;
-    --text:           #f3f5f7;
-    --text-muted:     #a8b5c3;
-    --text-faint:     #8291a2;
-    --accent:         #f0bd62;
-    --accent-dim:     #3d3125;
-    --blue:           #70c8eb;
-    --green:          #92dc8f;
-    --red:            #ff838b;
-    --orange:         #f4aa70;
-    --purple:         #c8adf3;
-    --radius-sm:      6px;
-    --radius-md:      10px;
-    --radius-lg:      16px;
+    --bg:             #101318;
+    --surface:        #171b21;
+    --surface-2:      #20252d;
+    --surface-3:      #292f38;
+    --border:         #303740;
+    --border-subtle:  #424b55;
+    --text:           #e9e8e3;
+    --text-muted:     #a9adaf;
+    --text-faint:     #858d94;
+    --accent:         #dbad61;
+    --accent-dim:     #332b22;
+    --blue:           #81b9ce;
+    --green:          #8fc399;
+    --red:            #e69696;
+    --orange:         #dfa575;
+    --purple:         #afa4c7;
+    --radius-sm:      3px;
+    --radius-md:      5px;
+    --radius-lg:      8px;
     --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
     --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
     --space-12: 48px; --space-16: 64px;
@@ -108,7 +108,7 @@
     --text-sm:   0.9rem;
     --text-base: 1rem;
     --text-lg:   1.25rem;
-    --text-xl:   clamp(1.8rem, 1.35rem + 1.5vw, 2.4rem);
+    --text-xl:   clamp(1.65rem, 1.4rem + 1vw, 2rem);
     --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
     --trans: 160ms var(--ease-out);
   }

@@ -109,9 +109,6 @@
     min-height: 100dvh;
     padding: var(--space-6);
     background: var(--bg);
-    background-image:
-      radial-gradient(ellipse 60% 40% at 20% 80%, color-mix(in oklch, var(--blue) 5%, transparent), transparent),
-      radial-gradient(ellipse 40% 30% at 80% 20%, color-mix(in oklch, var(--accent) 4%, transparent), transparent);
   }
 
   .card {
@@ -124,15 +121,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-5);
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--text) 4%, transparent),
-      0 22px 70px oklch(0 0 0 / 0.5),
-      0 2px 8px oklch(0 0 0 / 0.3);
+    box-shadow: none;
   }
 
   .brand img { display: block; width: min(220px, 100%); height: auto; }
 
-  .title    { font-size: 1.8rem; font-weight: 780; color: var(--text); letter-spacing: -.04em; margin-top: 3px; }
+  .title    { font-size: 1.7rem; font-weight: 650; color: var(--text); letter-spacing: -.025em; margin-top: 3px; }
   .subtitle { font-size: var(--text-sm); color: var(--text-muted); margin-top: calc(-1 * var(--space-3)); line-height: 1.5; }
 
   form { display: flex; flex-direction: column; gap: var(--space-4); }

@@ -103,13 +103,12 @@
   <aside class="sidebar" class:open={menuOpen}>
     <div class="brand">
       <img src="/hmmarr-logo.svg" alt="hmmarr" width="180" height="46" />
-      <span>YOUR MEDIA, IN ONE PLACE</span>
     </div>
 
     <nav class="sidebar-nav" aria-label="Main navigation">
       {#each NAV_GROUPS as group (group.label)}
         <section class="nav-group" aria-label={group.label}>
-          <div class="group-heading">{group.label}</div>
+          {#if group.label !== 'Overview'}<div class="group-heading">{group.label}</div>{/if}
           <ul class="nav-list">
               {#each NAV.filter((item) => group.ids.includes(item.id)) as item (item.id)}
                 {@render sidebarItem(item)}
@@ -130,7 +129,7 @@
 
     {#if showLogout}
       <div class="sidebar-footer">
-        {#if $authStatus.user}<div class="signed-in"><span class="avatar">{$authStatus.user.username?.slice(0, 1).toUpperCase()}</span><span><small>Signed in as</small><strong>{$authStatus.user.username}</strong></span></div>{/if}
+        {#if $authStatus.user}<p class="signed-in">{$authStatus.user.username}</p>{/if}
         <button class="logout-btn" onclick={logout} disabled={loggingOut}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span class="label">{loggingOut ? 'Signing out…' : 'Sign out'}</span>
@@ -249,7 +248,6 @@
     padding-top: var(--space-2);
   }
   .signed-in { padding: 8px 12px; color: var(--text-muted); font-size: var(--text-xs); overflow-wrap: anywhere; }
-  .signed-in strong { color: var(--text); font-weight: 600; }
 
   .logout-btn {
     display: flex;
@@ -293,50 +291,48 @@
 
   .shell { background: var(--bg); }
   .sidebar {
-    width: 246px;
-    padding: 22px 12px 14px;
-    background: #111821;
+    width: 228px;
+    padding: 20px 10px 12px;
+    background: var(--surface);
     border-right-color: var(--border);
     z-index: 31;
   }
-  .brand { display: grid; gap: 6px; padding: 0 13px 20px; margin-bottom: 0; border-bottom: 0; }
-  .brand img { max-width: 156px; }
-  .brand span { padding-left: 3px; color: var(--text-faint); font-size: 9px; font-weight: 700; letter-spacing: .16em; }
+  .brand { display: grid; padding: 0 10px 19px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .brand img { max-width: 144px; }
   .sidebar-nav { padding: 0 3px; scrollbar-color: var(--border-subtle) transparent; }
-  .nav-group { margin: 0 0 13px; }
+  .nav-group { margin: 0 0 9px; }
   .group-heading {
     min-height: auto;
-    padding: 14px 11px 8px;
+    padding: 12px 11px 6px;
     color: var(--text-faint);
-    font-size: 10px;
-    letter-spacing: .14em;
+    font-size: 11px;
+    font-weight: 550;
+    letter-spacing: .01em;
+    text-transform: none;
   }
   .nav-list { gap: 2px; }
-  .nav-item { position: relative; min-height: 38px; padding: 8px 11px; color: var(--text-muted); font-size: 13px; border-radius: 9px; }
-  .nav-item:hover { background: #222c38; color: var(--text); }
-  .nav-item.active { background: #353024; color: var(--accent); font-weight: 650; }
-  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--accent); }
-  .icon svg { width: 18px; height: 18px; }
+  .nav-item { position: relative; min-height: 36px; padding: 7px 11px; color: var(--text-muted); font-size: 13px; border-radius: var(--radius-md); }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
+  .nav-item.active::before { content: none; }
+  .nav-item.active .icon { color: var(--accent); }
+  .icon svg { width: 17px; height: 17px; }
   .nav-utility { padding: 2px 3px 0; border-top-color: var(--border); }
-  .sidebar-footer { display: grid; gap: 4px; margin: 10px 3px 0; padding-top: 12px; border-top: 1px solid var(--border); }
-  .signed-in { display: flex; align-items: center; gap: 10px; padding: 5px 8px; font-size: 12px; }
-  .signed-in > span:last-child { display: grid; gap: 2px; min-width: 0; }
-  .signed-in small { color: var(--text-faint); font-size: 10px; }
-  .signed-in strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .avatar { display: grid; place-items: center; width: 31px; height: 31px; flex: 0 0 31px; border-radius: 10px; background: var(--accent-dim); color: var(--accent); font-weight: 750; }
+  .sidebar-footer { display: grid; gap: 4px; margin: 10px 3px 0; padding-top: 10px; border-top: 1px solid var(--border); }
+  .signed-in { display: block; padding: 5px 8px; color: var(--text-faint); font-size: 12px; }
   .logout-btn { min-height: 34px; padding: 7px 8px; font-size: 12px; }
   .content {
-    padding: clamp(24px, 3.6vw, 56px);
-    background: radial-gradient(ellipse 80% 28% at 65% -10%, #17202a 0%, transparent 75%), var(--bg);
+    padding: clamp(24px, 3vw, 42px);
+    background: var(--bg);
   }
   .mobile-header, .menu-backdrop { display: none; }
 
   @media (max-width: 720px) {
     .shell { display: block; }
-    .mobile-header { position: sticky; top: 0; z-index: 25; display: flex; align-items: center; gap: 13px; height: 62px; padding: 0 16px; border-bottom: 1px solid var(--border); background: #111821ed; backdrop-filter: blur(20px); }
+    .mobile-header { position: sticky; top: 0; z-index: 25; display: flex; align-items: center; gap: 13px; height: 62px; padding: 0 16px; border-bottom: 1px solid var(--border); background: #171b21; }
     .mobile-header img { width: 122px; height: auto; }
     .mobile-current { min-width: 0; margin-left: auto; color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .menu-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); }
+    .menu-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); }
     .menu-button svg { width: 19px; height: 19px; }
     .menu-backdrop { display: block; position: fixed; inset: 0; z-index: 29; width: 100%; border: 0; background: #05080cc9; }
     .sidebar { display: flex; position: fixed; top: 0; bottom: 0; left: 0; width: min(290px, 84vw); height: 100dvh; visibility: hidden; transform: translateX(-105%); transition: transform 220ms var(--ease-out), visibility 220ms; box-shadow: 16px 0 48px #0008; }

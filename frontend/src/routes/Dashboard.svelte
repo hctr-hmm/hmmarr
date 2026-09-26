@@ -255,7 +255,6 @@
 <div class="page">
   <header class="page-head">
     <div>
-      <span class="eyebrow">YOUR MEDIA AT A GLANCE</span>
       <h1 class="title">Dashboard</h1>
       <p class="subtitle">
         {#if loaded}
@@ -277,54 +276,49 @@
 
   {#if pageError}<p class="error" role="alert">{pageError}</p>{/if}
 
-  <div class="overview-strip" aria-label="Overview">
-    <div class="overview-item"><span class="overview-icon live">●</span><div><strong>{loaded ? onlineCount : '—'}<small> / {SERVICES.length}</small></strong><span>Services online</span></div></div>
-    <div class="overview-item"><span class="overview-icon library">▦</span><div><strong>{loaded ? libraryTotal : '—'}</strong><span>Movies &amp; series</span></div></div>
-    <div class="overview-item"><span class="overview-icon queue">↓</span><div><strong>{loaded ? queuedTotal : '—'}</strong><span>In download queues</span></div></div>
-    <div class="overview-item"><span class="overview-icon alert">!</span><div><strong>{loaded ? alerts.length : '—'}</strong><span>Need attention</span></div></div>
+  <div class="overview-line" aria-label="Library summary">
+    <span><strong>{loaded ? libraryTotal : '—'}</strong> movies &amp; series</span>
+    <span><strong>{loaded ? queuedTotal : '—'}</strong> in queue</span>
+    <span><strong>{loaded ? alerts.length : '—'}</strong> issues</span>
   </div>
 
   <section class="section" aria-labelledby="services-heading">
-    <div class="section-head"><h2 id="services-heading">Your services</h2><span>Live library and activity totals</span></div>
-    <div class="grid">
+    <div class="section-head"><h2 id="services-heading">Services</h2><span>Live counts from connected apps</span></div>
+    <div class="service-list">
       {#each SERVICES as service (service.name)}
         {@const status = health[service.name]}
         {@const data = details[service.name]}
-        <article class={`card service-${service.name}`} class:unconfigured={status?.unconfigured}>
-          <div class="card-head">
-            <h3><span class="service-icon" aria-hidden="true">{service.label.slice(0, 1)}</span>{service.label}</h3>
-            <span class="state" class:good={status?.online && !status.loading} class:bad={status && !status.online && !status.unconfigured && !status.loading}>
+        <article class="service-row" class:unconfigured={status?.unconfigured}>
+          <div class="service-name"><h3>{service.label}</h3><span>{status?.version ? 'v' + status.version : ' '}</span></div>
+          <div class="state" class:good={status?.online && !status.loading} class:bad={status && !status.online && !status.unconfigured && !status.loading}>
               <span class="dot" aria-hidden="true"></span>
               {!status || status.loading ? 'Checking' : status.unconfigured ? 'Not configured' : status.online ? 'Online' : 'Offline'}
-            </span>
           </div>
           {#if status?.unconfigured}
-            <p class="card-note">Connect {service.label} to see its activity.</p>
+            <p class="service-message">Add its connection details to see activity.</p>
           {:else if status && !status.loading && !status.online}
-            <p class="card-note error-text">{status.error || 'Could not reach this service.'}</p>
+            <p class="service-message error-text">{status.error || 'Could not reach this service.'}</p>
           {:else if pageError}
-            <p class="card-note">Service information is unavailable.</p>
+            <p class="service-message">Service information is unavailable.</p>
           {:else if !status || !data}
-            <p class="card-note">Loading details…</p>
+            <p class="service-message">Loading details…</p>
           {:else}
             <div class="metrics">
               {#each data.metrics as metric (metric.label)}
                 <button class="metric" onclick={() => navigate(metric.route, metric.section)} title={'Open ' + metric.label}>
-                  <strong>{metric.value ?? '—'}</strong><span>{metric.label}</span>
+                  <strong>{metric.value ?? '—'}</strong> <span>{metric.label}</span>
                 </button>
               {/each}
             </div>
-            {#if data.partial}<p class="card-note">Some details could not be loaded.</p>{/if}
           {/if}
-          <div class="card-foot">
-            <span>{status?.version ? 'v' + status.version : ''}</span>
-            <button onclick={() => navigate(service.route)}>Open {service.label} <span aria-hidden="true">→</span></button>
-          </div>
+          <button class="service-open" onclick={() => navigate(service.route)} aria-label={'Open ' + service.label}>View <span aria-hidden="true">→</span></button>
+          {#if data?.partial}<p class="service-partial">Some details could not be loaded.</p>{/if}
         </article>
       {/each}
     </div>
   </section>
 
+  {#if !health.jellyfin?.unconfigured}
   <section class="panel now-watching" aria-labelledby="watching-heading">
     <div class="panel-head"><div><h2 id="watching-heading">Now watching</h2><p>Current playback on Jellyfin</p></div><button onclick={() => navigate('jellyfin')}>Open Jellyfin <span aria-hidden="true">→</span></button></div>
     {#if health.jellyfin?.unconfigured}<p class="empty">Connect Jellyfin to see current playback.</p>
@@ -333,6 +327,7 @@
     {:else if !details.jellyfin.sessions.length}<p class="empty">Nobody is watching right now.</p>
     {:else}<div class="watch-list">{#each details.jellyfin.sessions.slice(0, 4) as session, index (session.userName + index)}<div class="watch-row"><div><strong>{session.item.name}</strong><span>{session.userName} · {session.item.seriesName || session.item.type || 'Video'} · {session.paused ? 'Paused' : 'Playing'}</span></div><span>{session.durationSeconds ? Math.round(session.positionSeconds / session.durationSeconds * 100) : 0}%</span></div>{/each}</div>{/if}
   </section>
+  {/if}
 
   <div class="lower-grid">
     <section class="panel" aria-labelledby="attention-heading">
@@ -387,114 +382,66 @@
 </div>
 
 <style>
-  .page { max-width: 1120px; margin: 0 auto; display: grid; gap: var(--space-8); }
-  .page-head, .section-head, .card-head, .card-foot, .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
-  .title { color: var(--text); font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.02em; }
-  .subtitle, .section-head span, .panel-head p { color: var(--text-muted); font-size: var(--text-sm); }
-  .subtitle { margin-top: var(--space-1); }
-  .refresh-btn { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font-size: var(--text-sm); }
-  .refresh-btn:hover:not(:disabled), .card-foot button:hover, .panel-head button:hover { color: var(--accent); }
-  .refresh-btn:disabled { opacity: .55; cursor: wait; }
+  .page { width: min(100%, 1240px); margin: 0 auto; display: grid; gap: 34px; }
+  .page-head, .section-head, .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .title { color: var(--text); font-size: var(--text-xl); font-weight: 650; letter-spacing: -.03em; }
+  .subtitle { margin-top: 6px; color: var(--text-muted); font-size: var(--text-sm); }
+  .refresh-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: transparent; color: var(--text-muted); font-size: var(--text-sm); }
+  .refresh-btn:hover:not(:disabled), .panel-head button:hover, .service-open:hover { color: var(--text); border-color: var(--border-subtle); }
+  .refresh-btn:disabled { opacity: .6; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinning { animation: spin .8s linear infinite; }
-  .error { padding: 10px 12px; border: 1px solid var(--red); border-radius: var(--radius-md); color: var(--red); font-size: var(--text-sm); }
-  .section { display: grid; gap: var(--space-4); }
+  .error { padding: 12px; border-left: 2px solid var(--red); color: var(--red); font-size: var(--text-sm); }
+  .overview-line { display: flex; flex-wrap: wrap; gap: 14px 0; padding: 0 0 24px; border-bottom: 1px solid var(--border); }
+  .overview-line span { display: inline-flex; align-items: baseline; gap: 6px; padding: 0 22px; border-left: 1px solid var(--border); color: var(--text-muted); font-size: var(--text-sm); }
+  .overview-line span:first-child { padding-left: 0; border-left: 0; }
+  .overview-line strong { color: var(--text); font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .section { display: grid; gap: 14px; }
   .section-head { align-items: baseline; }
-  .section-head h2, .panel-head h2 { color: var(--text); font-size: var(--text-lg); font-weight: 700; }
-  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
-  .card, .panel { min-width: 0; padding: var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
-  .card { display: flex; flex-direction: column; gap: var(--space-4); }
-  .card.unconfigured { opacity: .65; }
-  .card-head { align-items: center; }
-  .card-head h3 { color: var(--text); font-size: var(--text-base); font-weight: 700; }
-  .state { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: var(--text-xs); white-space: nowrap; }
+  .section-head h2, .panel-head h2 { color: var(--text); font-size: 17px; font-weight: 650; letter-spacing: -.02em; }
+  .section-head span, .panel-head p { color: var(--text-muted); font-size: 12px; }
+  .panel-head p { margin-top: 4px; }
+  .service-list { border-top: 1px solid var(--border); }
+  .service-row { display: grid; grid-template-columns: 150px 116px minmax(0, 1fr) 56px; align-items: center; gap: 16px; min-height: 75px; padding: 12px 2px; border-bottom: 1px solid var(--border); }
+  .service-row.unconfigured { opacity: .7; }
+  .service-name { display: grid; gap: 4px; min-width: 0; }
+  .service-name h3 { color: var(--text); font-size: 14px; font-weight: 650; }
+  .service-name span { color: var(--text-faint); font-size: 11px; white-space: nowrap; }
+  .state { display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); font-size: 12px; white-space: nowrap; }
   .state.good { color: var(--green); }
   .state.bad { color: var(--red); }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .metric { display: grid; gap: 5px; min-width: 0; padding: 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); text-align: left; }
-  .metric:hover { border-color: var(--accent); }
-  .metric strong { font-size: var(--text-xl); line-height: 1.1; }
-  .metric span { color: var(--text-muted); font-size: var(--text-xs); line-height: 1.3; }
-  .card-note { color: var(--text-muted); font-size: var(--text-sm); min-height: 42px; }
-  .error-text { color: var(--red); overflow-wrap: anywhere; }
-  .card-foot { align-items: center; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); color: var(--text-faint); font-size: var(--text-xs); }
-  .card-foot button, .panel-head button { border: 0; background: none; color: var(--text-muted); font-size: var(--text-sm); font-weight: 600; white-space: nowrap; }
-  .lower-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
-  .panel { display: grid; align-content: start; gap: var(--space-4); }
-  .panel-head p { margin-top: 3px; }
-  .empty { padding: var(--space-5) 0; color: var(--text-muted); font-size: var(--text-sm); }
+  .metric { min-width: 0; padding: 5px 0; border: 0; background: none; color: var(--text); text-align: left; white-space: nowrap; }
+  .metric:hover strong, .metric:hover span { color: var(--accent); }
+  .metric strong { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .metric span { margin-left: 3px; color: var(--text-muted); font-size: 11px; }
+  .service-message { min-width: 0; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+  .error-text { color: var(--red); }
+  .service-open, .panel-head button { padding: 4px 0; border: 0; background: none; color: var(--text-muted); font-size: 12px; text-align: right; white-space: nowrap; }
+  .service-open span, .panel-head button span { margin-left: 2px; }
+  .service-partial { grid-column: 3 / 4; margin-top: -10px; color: var(--orange); font-size: 11px; }
+  .panel { display: grid; align-content: start; gap: 13px; min-width: 0; padding-top: 17px; border-top: 1px solid var(--border); }
+  .lower-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+  .empty { padding: 15px 0; color: var(--text-muted); font-size: var(--text-sm); }
   .list { display: grid; }
-  .list-row, .event-row { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-top: 1px solid var(--border); }
-  .list-row:first-child, .event-row:first-child { border-top: 0; }
+  .list-row, .event-row, .watch-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
+  .list-row:first-child, .event-row:first-child, .watch-row:first-child { border-top: 0; }
   .list-row div, .event-info { min-width: 0; flex: 1; }
-  .list-row strong, .event-info strong { color: var(--text); font-size: var(--text-sm); font-weight: 650; }
-  .list-row p, .event-info span { display: block; margin-top: 3px; color: var(--text-muted); font-size: var(--text-xs); line-height: 1.45; overflow-wrap: anywhere; }
-  .issue-dot { width: 7px; height: 7px; margin-top: 7px; flex-shrink: 0; border-radius: 50%; background: var(--orange); }
+  .list-row strong, .event-info strong, .watch-row strong { color: var(--text); font-size: 13px; font-weight: 600; }
+  .list-row p, .event-info span, .watch-row span { display: block; margin-top: 3px; color: var(--text-muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+  .issue-dot { width: 6px; height: 6px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: var(--orange); }
   .issue-dot.critical { background: var(--red); }
-  .more { padding-top: 8px; color: var(--text-muted); font-size: var(--text-xs); }
-  .now-watching { gap: var(--space-3); }
-  .watch-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-5); }
-  .watch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 0; border-top: 1px solid var(--border); }
-  .watch-row > div { min-width: 0; display: grid; gap: 3px; }
-  .watch-row strong { color: var(--text); font-size: var(--text-sm); overflow-wrap: anywhere; }
-  .watch-row span { color: var(--text-muted); font-size: var(--text-xs); }
-  .event-row { width: 100%; align-items: center; background: none; border-right: 0; border-bottom: 0; border-left: 0; color: var(--text-muted); text-align: left; }
+  .more { padding-top: 9px; color: var(--text-muted); font-size: 12px; }
+  .watch-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+  .watch-row { align-items: center; justify-content: space-between; min-width: 0; }
+  .watch-row > div { min-width: 0; }
+  .watch-row > span { margin: 0; font-variant-numeric: tabular-nums; }
+  .event-row { width: 100%; align-items: center; border-right: 0; border-bottom: 0; border-left: 0; background: none; color: var(--text-muted); text-align: left; }
   .event-row:hover strong { color: var(--accent); }
-  .event-date { flex: 0 0 78px; color: var(--accent); font-size: var(--text-xs); font-weight: 700; }
-  @media (max-width: 860px) { .grid, .lower-grid, .watch-list { grid-template-columns: 1fr; } }
-  @media (max-width: 470px) { .page-head, .section-head { flex-direction: column; align-items: flex-start; } .metrics { gap: 5px; } .metric { padding: 8px; } .event-date { flex-basis: 66px; } }
-  .page { max-width: 1440px; gap: 30px; }
-  .eyebrow { display: block; margin-bottom: 8px; color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .17em; }
-  .title { font-size: var(--text-xl); font-weight: 780; letter-spacing: -.045em; }
-  .subtitle { margin-top: 8px; line-height: 1.5; }
-  .refresh-btn { min-height: 41px; padding: 9px 14px; font-weight: 650; background: var(--surface-2); border-color: var(--border); }
-  .refresh-btn:hover:not(:disabled) { border-color: var(--accent); }
-  .overview-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--border); box-shadow: 0 18px 50px #0002; }
-  .overview-item { display: flex; align-items: center; gap: 15px; min-width: 0; min-height: 98px; padding: 18px 20px; background: #18212b; }
-  .overview-item > div { display: grid; gap: 3px; min-width: 0; }
-  .overview-item strong { color: var(--text); font-size: 26px; font-weight: 780; line-height: 1; letter-spacing: -.04em; }
-  .overview-item strong small { color: var(--text-faint); font-size: 14px; font-weight: 500; }
-  .overview-item div > span { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
-  .overview-icon { display: grid; place-items: center; width: 37px; height: 37px; flex: 0 0 37px; border-radius: 11px; font-size: 21px; font-weight: 600; }
-  .overview-icon.live { color: var(--green); background: #92dc8f1c; font-size: 15px; }
-  .overview-icon.library { color: var(--blue); background: #70c8eb1c; }
-  .overview-icon.queue { color: var(--accent); background: #f0bd621c; }
-  .overview-icon.alert { color: var(--orange); background: #f4aa701c; }
-  .section-head h2, .panel-head h2 { font-size: 18px; letter-spacing: -.025em; }
-  .section-head span { font-size: 12px; }
-  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-  .card, .panel { padding: 21px; background: var(--surface); box-shadow: 0 8px 24px #0000001a; }
-  .card { position: relative; overflow: hidden; gap: 18px; min-height: 196px; transition: transform var(--trans), border-color var(--trans); }
-  .card:hover { transform: translateY(-2px); border-color: var(--border-subtle); }
-  .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--service-color, var(--accent)); opacity: .8; }
-  .service-radarr { --service-color: var(--accent); }
-  .service-sonarr { --service-color: var(--blue); }
-  .service-bazarr { --service-color: var(--purple); }
-  .service-prowlarr { --service-color: var(--green); }
-  .service-qbittorrent { --service-color: var(--blue); }
-  .service-seerr { --service-color: var(--orange); }
-  .service-jellyfin { --service-color: var(--purple); }
-  .card.unconfigured { opacity: .72; }
-  .card-head h3 { display: flex; align-items: center; gap: 10px; font-size: 15px; }
-  .service-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; color: var(--service-color); background: color-mix(in srgb, var(--service-color) 14%, transparent); font-size: 15px; font-weight: 780; }
-  .state { font-weight: 650; }
-  .metrics { gap: 4px; }
-  .metric { gap: 4px; padding: 9px 7px 9px 0; border: 0; border-radius: 0; border-right: 1px solid var(--border); background: transparent; }
-  .metric:last-child { border-right: 0; padding-left: 7px; }
-  .metric:nth-child(2) { padding-left: 7px; }
-  .metric:hover { background: #ffffff08; border-color: var(--border); }
-  .metric strong { font-size: 24px; letter-spacing: -.04em; }
-  .metric span { font-size: 11px; line-height: 1.35; }
-  .card-foot { padding-top: 13px; }
-  .card-foot button, .panel-head button { color: var(--accent); }
-  .panel { gap: 18px; }
-  .now-watching { gap: 12px; }
-  .now-watching .empty { padding: 8px 0 3px; }
-  .lower-grid { gap: 14px; }
-  .list-row, .event-row { padding: 14px 0; }
-  .list-row p, .event-info span { font-size: 12px; }
-  @media (max-width: 1180px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .overview-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 820px) { .grid, .lower-grid, .watch-list { grid-template-columns: 1fr; } }
-  @media (max-width: 520px) { .page { gap: 24px; } .overview-item { min-height: 86px; padding: 12px; gap: 9px; } .overview-icon { width: 30px; height: 30px; flex-basis: 30px; } .overview-item strong { font-size: 22px; } .overview-item div > span { font-size: 10px; white-space: normal; } .card { min-height: 186px; } }
+  .event-date { flex: 0 0 78px; color: var(--text-muted); font-size: 12px; font-weight: 600; }
+  @media (max-width: 1050px) { .service-row { grid-template-columns: 110px 98px minmax(0, 1fr) 40px; gap: 10px; } .metric span { display: block; margin-left: 0; white-space: normal; } }
+  @media (max-width: 800px) { .lower-grid, .watch-list { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) { .service-row { grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 14px 0; } .service-name { grid-column: 1; } .state { grid-column: 2; justify-self: end; } .metrics, .service-message { grid-column: 1 / -1; } .service-open { grid-column: 2; grid-row: 3; justify-self: end; } .service-row .metrics { grid-row: 2; } .service-row .service-message { grid-row: 2; } .service-partial { grid-column: 1 / -1; margin-top: 0; } .section-head span { display: none; } }
+  @media (max-width: 470px) { .page { gap: 26px; } .page-head { align-items: flex-start; } .overview-line span { padding: 0 12px; font-size: 11px; } .overview-line strong { font-size: 18px; } .metric strong { font-size: 14px; } }
 </style>

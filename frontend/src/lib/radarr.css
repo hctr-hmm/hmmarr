@@ -66,3 +66,21 @@
 .rad-modal-backdrop { background: #05080cd9; backdrop-filter: blur(6px); }
 .rad-modal { padding: clamp(20px, 3vw, 32px); border-radius: 20px; box-shadow: 0 30px 100px #000b; }
 @media (max-width: 600px) { .rad-page { gap: 18px; } .rad-actions { width: auto; max-width: 100%; } }
+
+/* A quieter base: let the media and data carry the page. */
+.rad-page { width: min(100%, 1240px); gap: 22px; }
+.rad-head h1 { font-weight: 650; letter-spacing: -.025em; }
+.rad-input, .rad-select, .rad-textarea { min-height: 38px; padding: 8px 10px; background: var(--surface); }
+.rad-input:focus, .rad-select:focus, .rad-textarea:focus { box-shadow: 0 0 0 2px #dbad6129; }
+.rad-button { min-height: 36px; padding: 7px 11px; background: transparent; font-weight: 550; }
+.rad-button:hover:not(:disabled) { background: var(--surface-2); }
+.rad-button.primary { color: #19150f; }
+.rad-button.primary:hover:not(:disabled) { background: #e6bc78; border-color: #e6bc78; color: #19150f; }
+.rad-button:active:not(:disabled) { transform: none; }
+.rad-panel { padding: 18px; box-shadow: none; }
+.rad-row { padding: 13px 15px; }
+.rad-row:hover { background: var(--surface); }
+.rad-badge { padding: 3px 7px; border-radius: var(--radius-sm); font-weight: 550; }
+.rad-empty { padding: 42px 20px; background: transparent; }
+.rad-modal-backdrop { background: #080a0dcc; backdrop-filter: none; }
+.rad-modal { border-radius: var(--radius-lg); box-shadow: 0 22px 70px #0009; }
