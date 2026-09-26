@@ -3,7 +3,7 @@ import { writable, derived } from 'svelte/store';
 // Authentication state
 export const authStatus = writable({ checked: false, authRequired: false, authenticated: false });
 
-// Active route: 'login' | 'dashboard' | 'movies' | 'wanted' | 'collections' | 'series' | 'queue' | 'calendar' | 'history' | 'prowlarr' | 'bazarr'
+// Active route: 'login' | 'dashboard' | 'movies' | 'discover' | 'wanted' | 'collections' | 'series' | 'queue' | 'calendar' | 'history' | 'blocklist' | 'system' | 'prowlarr' | 'bazarr'
 export const route = writable('login');
 
 // Services list from /api/services

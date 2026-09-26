@@ -1,12 +1,12 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, untrack } from 'svelte';
   import { api } from '../lib/api.js';
   import { posterUrl, errorMessage } from '../lib/radarr.js';
 
-  let { existingIds = new Set(), onClose, onAdded } = $props();
+  let { existingIds = new Set(), initialMovie = null, onClose, onAdded } = $props();
   let term = $state('');
   let results = $state([]);
-  let selected = $state(null);
+  let selected = $state(untrack(() => initialMovie));
   let roots = $state([]);
   let profiles = $state([]);
   let rootFolderPath = $state('');

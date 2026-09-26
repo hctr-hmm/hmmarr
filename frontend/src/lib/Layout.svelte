@@ -7,12 +7,15 @@
   const NAV = [
     { id: 'dashboard', label: 'Dashboard', icon: 'grid' },
     { id: 'movies',    label: 'Movies',    icon: 'film' },
+    { id: 'discover',  label: 'Discover',  icon: 'search' },
     { id: 'wanted',    label: 'Wanted',    icon: 'download' },
     { id: 'collections', label: 'Collections', icon: 'film' },
     { id: 'series',    label: 'Series',    icon: 'tv' },
     { id: 'queue',     label: 'Queue',     icon: 'download' },
     { id: 'calendar',  label: 'Calendar',  icon: 'calendar' },
     { id: 'history',   label: 'History',   icon: 'history' },
+    { id: 'blocklist', label: 'Blocklist', icon: 'download' },
+    { id: 'system',    label: 'System',    icon: 'grid' },
     { id: 'prowlarr',  label: 'Indexers',  icon: 'search' },
     { id: 'bazarr',    label: 'Subtitles', icon: 'cc' },
   ];

@@ -12,16 +12,22 @@
   import History from './routes/History.svelte';
   import Wanted from './routes/Wanted.svelte';
   import Collections from './routes/Collections.svelte';
+  import Discover from './routes/Discover.svelte';
+  import Blocklist from './routes/Blocklist.svelte';
+  import System from './routes/System.svelte';
 
   const ROUTES = {
     dashboard: { component: Dashboard, title: '' },
     movies:    { component: Movies, title: '' },
     wanted:    { component: Wanted, title: '' },
     collections: { component: Collections, title: '' },
+    discover:  { component: Discover, title: '' },
     series:    { component: ComingSoon, title: 'Series' },
     queue:     { component: Queue, title: '' },
     calendar:  { component: Calendar, title: '' },
     history:   { component: History, title: '' },
+    blocklist: { component: Blocklist, title: '' },
+    system:    { component: System, title: '' },
     prowlarr:  { component: ComingSoon, title: 'Indexers' },
     bazarr:    { component: ComingSoon, title: 'Subtitles' },
   };
