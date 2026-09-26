@@ -6,8 +6,8 @@ import { stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, extname } from 'node:path';
 import { loadConfig } from './config.js';
-import { clearSessionCookie, createSessionCookie, hashPassword, isAuthenticated, verifyPassword } from './auth.js';
-import { getPool, migrate, findUserByUsername, createUser, listUsers, deleteUser, userCount } from './db.js';
+import { clearSessionCookie, createSessionCookie, hashPassword, readSessionCookie, verifyPassword } from './auth.js';
+import { getPool, migrate, findUserByUsername, findUserById, createUser, listUsers, updateUserPassword, deleteUser, userCount } from './db.js';
 import { probeService, proxyRequest } from './proxy.js';
 import { createPosterHandler } from './posters.js';
 
@@ -52,6 +52,16 @@ async function readJson(request, limit = 16384) {
 }
 
 const publicService = (s) => ({ name: s.name, label: s.label, apiVersion: s.apiVersion, configured: true });
+const publicUser = (user) => ({ id: user.id, username: user.username, isAdmin: user.is_admin });
+const validUsername = (value) => typeof value === 'string' && /^[A-Za-z0-9._-]{3,32}$/.test(value);
+const validPassword = (value) => typeof value === 'string' && value.length >= 12 && value.length <= 256;
+
+async function sessionUser(request, config, pool) {
+  const claims = readSessionCookie(request, config);
+  if (!claims) return null;
+  const user = await findUserById(pool, claims.userId);
+  return user?.session_version === claims.sessionVersion ? user : null;
+}
 const log = (level, event, fields = {}) =>
   process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), level, event, ...fields })}\n`);
 
@@ -79,28 +89,42 @@ export function createAppServer(config, pool) {
         return sendJson(response, 200, { status: 'ok', uptimeSeconds: Math.floor(process.uptime()) });
 
       // ── Auth status ───────────────────────────────────────────────────────────
-      if (request.method === 'GET' && pathname === '/api/auth/status')
-        return sendJson(response, 200, { authRequired: config.authRequired, authenticated: isAuthenticated(request, config) });
+      if (request.method === 'GET' && pathname === '/api/auth/status') {
+        const user = await sessionUser(request, config, pool);
+        return sendJson(response, 200, { authRequired: true, authenticated: Boolean(user), user: user ? publicUser(user) : null });
+      }
 
       // ── Login ─────────────────────────────────────────────────────────────────
       if (request.method === 'POST' && pathname === '/api/auth/login') {
         const body = await readJson(request);
         const { username, password } = body;
-        if (!username || !password)
+        if (typeof username !== 'string' || typeof password !== 'string' || !username || !password)
           return sendJson(response, 400, { error: 'username_and_password_required', requestId });
-        const user = await findUserByUsername(pool, username);
+        const user = await findUserByUsername(pool, username.trim());
         if (!user || !(await verifyPassword(password, user.password_hash)))
           return sendJson(response, 401, { error: 'invalid_credentials', requestId });
-        return sendJson(response, 200, { authenticated: true }, { 'set-cookie': createSessionCookie(config) });
+        return sendJson(response, 200, { authenticated: true, user: publicUser(user) }, { 'set-cookie': createSessionCookie(config, user) });
       }
 
       // ── Logout ────────────────────────────────────────────────────────────────
       if (request.method === 'POST' && pathname === '/api/auth/logout')
-        return sendJson(response, 200, { authenticated: false }, { 'set-cookie': clearSessionCookie(config) });
+        return sendJson(response, 200, { authenticated: false }, { 'set-cookie': clearSessionCookie() });
 
-      // ── All routes below require authentication ───────────────────────────
-      if (!isAuthenticated(request, config))
+      // ── All routes below require a current user ──────────────────────────────
+      const currentUser = await sessionUser(request, config, pool);
+      if (!currentUser)
         return sendJson(response, 401, { error: 'authentication_required', requestId });
+
+      if (request.method === 'POST' && pathname === '/api/auth/password') {
+        const body = await readJson(request);
+        if (typeof body.currentPassword !== 'string' || !(await verifyPassword(body.currentPassword, (await findUserByUsername(pool, currentUser.username)).password_hash)))
+          return sendJson(response, 403, { error: 'incorrect_current_password', requestId });
+        if (!validPassword(body.newPassword))
+          return sendJson(response, 400, { error: 'password_must_be_12_to_256_characters', requestId });
+        const hash = await hashPassword(body.newPassword);
+        const sessionVersion = await updateUserPassword(pool, currentUser.id, hash);
+        return sendJson(response, 200, { changed: true }, { 'set-cookie': createSessionCookie(config, { ...currentUser, session_version: sessionVersion }) });
+      }
 
       const posterMatch = pathname.match(/^\/api\/posters\/(radarr|sonarr)\/([1-9]\d*)\.jpg$/);
       if (request.method === 'GET' && posterMatch) {
@@ -129,30 +153,48 @@ export function createAppServer(config, pool) {
       }
 
       // ── Admin: user management ─────────────────────────────────────────────
-      if (request.method === 'GET' && pathname === '/api/admin/users') {
-        const users = await listUsers(pool);
-        return sendJson(response, 200, users);
-      }
+      if (pathname.startsWith('/api/admin/') && !currentUser.is_admin)
+        return sendJson(response, 403, { error: 'admin_required', requestId });
+
+      if (request.method === 'GET' && pathname === '/api/admin/users')
+        return sendJson(response, 200, await listUsers(pool));
 
       if (request.method === 'POST' && pathname === '/api/admin/users') {
         const body = await readJson(request);
-        const { username, password } = body;
-        if (!username || !password || username.length < 1 || password.length < 8)
-          return sendJson(response, 400, { error: 'username required; password must be at least 8 characters', requestId });
-        const hash = await hashPassword(password);
+        const username = typeof body.username === 'string' ? body.username.trim() : '';
+        if (!validUsername(username))
+          return sendJson(response, 400, { error: 'username_must_be_3_to_32_letters_numbers_dots_dashes_or_underscores', requestId });
+        if (!validPassword(body.password))
+          return sendJson(response, 400, { error: 'password_must_be_12_to_256_characters', requestId });
+        const hash = await hashPassword(body.password);
         try {
           const user = await createUser(pool, username, hash);
-          return sendJson(response, 201, { id: user.id, username: user.username });
+          return sendJson(response, 201, publicUser(user));
         } catch (err) {
           if (err.code === '23505') return sendJson(response, 409, { error: 'username_taken', requestId });
           throw err;
         }
       }
 
+      const resetPasswordMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)\/password$/);
+      if (request.method === 'PUT' && resetPasswordMatch) {
+        const target = await findUserByUsername(pool, decodeURIComponent(resetPasswordMatch[1]));
+        if (!target) return sendJson(response, 404, { error: 'user_not_found', requestId });
+        if (target.is_admin) return sendJson(response, 403, { error: 'admin_password_self_service_only', requestId });
+        const body = await readJson(request);
+        if (!validPassword(body.password))
+          return sendJson(response, 400, { error: 'password_must_be_12_to_256_characters', requestId });
+        await updateUserPassword(pool, target.id, await hashPassword(body.password));
+        return sendJson(response, 200, { changed: true });
+      }
+
       const deleteUserMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)$/);
       if (request.method === 'DELETE' && deleteUserMatch) {
-        const deleted = await deleteUser(pool, decodeURIComponent(deleteUserMatch[1]));
-        return sendJson(response, deleted ? 200 : 404, { deleted });
+        const target = await findUserByUsername(pool, decodeURIComponent(deleteUserMatch[1]));
+        if (!target) return sendJson(response, 404, { error: 'user_not_found', requestId });
+        if (target.is_admin) return sendJson(response, 403, { error: 'cannot_delete_admin', requestId });
+        await deleteUser(pool, target.username);
+        return sendJson(response, 200, { deleted: true });
       }
 
       // ── Proxy ─────────────────────────────────────────────────────────────────
@@ -185,7 +227,7 @@ export async function start(config = loadConfig()) {
     const count = await userCount(pool);
     if (count === 0) {
       const hash = await hashPassword(config.bootstrapPass);
-      await createUser(pool, config.bootstrapUser, hash);
+      await createUser(pool, config.bootstrapUser, hash, true);
       log('info', 'bootstrap_user_created', { username: config.bootstrapUser });
     }
   }

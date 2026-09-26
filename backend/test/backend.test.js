@@ -30,9 +30,32 @@ before(async () => {
   });
   const upstreamPort = await listen(upstream);
   const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret', BAZARR_URL: `http://127.0.0.1:${upstreamPort}`, BAZARR_API_KEY: 'bazarr-secret', PROWLARR_URL: `http://127.0.0.1:${upstreamPort}`, PROWLARR_API_KEY: 'prowlarr-secret' });
-  const user = { id: 1, username, password_hash: await hashPassword(password) };
+  const user = { id: 1, username, password_hash: await hashPassword(password), is_admin: true, session_version: 1, created_at: new Date().toISOString() };
+  const users = new Map([[username, user]]);
+  let nextId = 2;
   const pool = { query: async (sql, params) => {
-    if (sql.startsWith('SELECT id, username, password_hash')) return { rows: params[0] === username ? [user] : [] };
+    if (sql.startsWith('SELECT id, username, password_hash')) return { rows: users.has(params[0]) ? [users.get(params[0])] : [] };
+    if (sql.startsWith('SELECT id, username, is_admin, session_version')) return { rows: [...users.values()].filter((item) => item.id === params[0]) };
+    if (sql.startsWith('SELECT id, username, is_admin, created_at')) return { rows: [...users.values()].map(({ id, username, is_admin, created_at }) => ({ id, username, is_admin, created_at })) };
+    if (sql.startsWith('INSERT INTO hmmarr_users')) {
+      if (users.has(params[0])) throw Object.assign(new Error('duplicate key'), { code: '23505' });
+      const created = { id: nextId++, username: params[0], password_hash: params[1], is_admin: params[2], session_version: 1, created_at: new Date().toISOString() };
+      users.set(created.username, created);
+      return { rows: [created] };
+    }
+    if (sql.startsWith('UPDATE hmmarr_users SET password_hash')) {
+      const found = [...users.values()].find((item) => item.id === params[0]);
+      if (!found) return { rows: [] };
+      found.password_hash = params[1];
+      found.session_version++;
+      return { rows: [{ session_version: found.session_version }] };
+    }
+    if (sql.startsWith('DELETE FROM hmmarr_users')) {
+      const found = users.get(params[0]);
+      if (!found || found.is_admin) return { rowCount: 0 };
+      users.delete(params[0]);
+      return { rowCount: 1 };
+    }
     throw new Error(`Unexpected query: ${sql}`);
   } };
   app = createAppServer(config, pool);
@@ -59,6 +82,56 @@ test('login creates a usable HttpOnly session', async () => {
   assert.match(cookie, /HttpOnly/);
   const services = await fetch(`${baseUrl}/api/services`, { headers: { cookie } });
   assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }, { name: 'bazarr', label: 'Bazarr', apiVersion: 'v1', configured: true }, { name: 'prowlarr', label: 'Prowlarr', apiVersion: 'v1', configured: true }]);
+});
+
+test('member accounts have separate sessions, can change passwords, and cannot manage users', async () => {
+  const request = (path, method = 'GET', session = cookie, body) => fetch(`${baseUrl}${path}`, {
+    method,
+    headers: { cookie: session, ...(body ? { 'content-type': 'application/json' } : {}) },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  const status = await request('/api/auth/status');
+  assert.deepEqual((await status.json()).user, { id: 1, username: 'admin', isAdmin: true });
+
+  const memberName = 'media-viewer';
+  const memberPassword = 'member-password-123';
+  const created = await request('/api/admin/users', 'POST', cookie, { username: memberName, password: memberPassword });
+  assert.equal(created.status, 201);
+  assert.equal((await created.json()).isAdmin, false);
+  const listed = await request('/api/admin/users');
+  assert.equal(listed.status, 200);
+  const accounts = await listed.json();
+  assert.equal(accounts.length, 2);
+  assert.ok(accounts.every((account) => !('password_hash' in account)));
+
+  const memberLogin = await fetch(`${baseUrl}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: memberName, password: memberPassword }) });
+  assert.equal(memberLogin.status, 200);
+  const memberCookie = memberLogin.headers.get('set-cookie');
+  assert.equal((await request('/api/services', 'GET', memberCookie)).status, 200);
+  assert.deepEqual((await (await request('/api/auth/status', 'GET', memberCookie)).json()).user, { id: 2, username: memberName, isAdmin: false });
+  assert.equal((await request('/api/admin/users', 'GET', memberCookie)).status, 403);
+  assert.equal((await request('/api/admin/users', 'POST', memberCookie, { username: 'intruder', password: memberPassword })).status, 403);
+  assert.equal((await request(`/api/admin/users/${memberName}`, 'DELETE', memberCookie)).status, 403);
+
+  const changedPassword = 'member-new-password-456';
+  assert.equal((await request('/api/auth/password', 'POST', memberCookie, { currentPassword: 'wrong-password', newPassword: changedPassword })).status, 403);
+  const changed = await request('/api/auth/password', 'POST', memberCookie, { currentPassword: memberPassword, newPassword: changedPassword });
+  assert.equal(changed.status, 200);
+  const currentCookie = changed.headers.get('set-cookie');
+  assert.equal((await request('/api/services', 'GET', memberCookie)).status, 401);
+  assert.equal((await request('/api/services', 'GET', currentCookie)).status, 200);
+
+  const resetPassword = 'member-reset-password-789';
+  assert.equal((await request(`/api/admin/users/${memberName}/password`, 'PUT', cookie, { password: resetPassword })).status, 200);
+  assert.equal((await request('/api/services', 'GET', currentCookie)).status, 401);
+  const resetLogin = await fetch(`${baseUrl}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: memberName, password: resetPassword }) });
+  assert.equal(resetLogin.status, 200);
+  const resetCookie = resetLogin.headers.get('set-cookie');
+  assert.equal((await request(`/api/admin/users/${username}`, 'DELETE')).status, 403);
+  assert.equal((await request(`/api/admin/users/${username}/password`, 'PUT', cookie, { password: resetPassword })).status, 403);
+  assert.equal((await request(`/api/admin/users/${memberName}`, 'DELETE')).status, 200);
+  assert.equal((await request('/api/services', 'GET', resetCookie)).status, 401);
+  assert.equal((await fetch(`${baseUrl}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: memberName, password: resetPassword }) })).status, 401);
 });
 
 test('proxy injects API key, strips supplied key, and forwards query', async () => {

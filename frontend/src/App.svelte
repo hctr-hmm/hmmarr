@@ -14,6 +14,7 @@
   import Discover from './routes/Discover.svelte';
   import Blocklist from './routes/Blocklist.svelte';
   import System from './routes/System.svelte';
+  import Users from './routes/Users.svelte';
   import Series from './routes/Series.svelte';
   import Subtitles from './routes/Subtitles.svelte';
   import Indexers from './routes/Indexers.svelte';
@@ -30,6 +31,7 @@
     history:   { component: History, title: '' },
     blocklist: { component: Blocklist, title: '' },
     system:    { component: System, title: '' },
+    users:     { component: Users, title: '' },
     prowlarr:  { component: Indexers, title: '' },
     bazarr:    { component: Subtitles, title: '' },
   };
@@ -45,7 +47,7 @@
         navigate('login');
       }
     } catch {
-      authStatus.set({ checked: true, authRequired: true, authenticated: false });
+      authStatus.set({ checked: true, authRequired: true, authenticated: false, user: null });
       navigate('login');
     }
   });

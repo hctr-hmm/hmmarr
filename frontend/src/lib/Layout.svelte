@@ -17,7 +17,8 @@
     { id: 'series', label: 'Series', icon: 'tv' },
     { id: 'bazarr', label: 'Subtitles', icon: 'cc' },
     { id: 'prowlarr', label: 'Indexers', icon: 'search' },
-    { id: 'system', label: 'System', icon: 'grid' }
+    { id: 'system', label: 'System', icon: 'grid' },
+    { id: 'users', label: 'Users', icon: 'users' }
   ];
 
   const RADARR_IDS = ['movies', 'discover', 'collections', 'wanted', 'queue', 'calendar', 'history', 'blocklist'];
@@ -39,7 +40,7 @@
     } catch {
       // Cookie may already be gone — proceed to login anyway.
     } finally {
-      authStatus.set({ checked: true, authRequired: true, authenticated: false });
+      authStatus.set({ checked: true, authRequired: true, authenticated: false, user: null });
       navigate('login');
     }
   }
@@ -70,6 +71,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
         {:else if item.icon === 'search'}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        {:else if item.icon === 'users'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><path d="M17 5a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5v1"/></svg>
         {:else if item.icon === 'cc'}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M9.5 14.5a2.5 2.5 0 0 1 0-5"/><path d="M17 14.5a2.5 2.5 0 0 1 0-5"/></svg>
         {/if}
@@ -122,11 +125,13 @@
     <nav class="nav-utility" aria-label="System navigation">
       <ul class="nav-list">
         {@render sidebarItem(NAV.find((item) => item.id === 'system'))}
+        {@render sidebarItem(NAV.find((item) => item.id === 'users'))}
       </ul>
     </nav>
 
     {#if showLogout}
       <div class="sidebar-footer">
+        {#if $authStatus.user}<p class="signed-in">Signed in as <strong>{$authStatus.user.username}</strong></p>{/if}
         <button class="logout-btn" onclick={logout} disabled={loggingOut}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span class="label">{loggingOut ? 'Signing out…' : 'Sign out'}</span>
@@ -166,6 +171,8 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
               {:else if item.icon === 'search'}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              {:else if item.icon === 'users'}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><path d="M17 5a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5v1"/></svg>
               {:else if item.icon === 'cc'}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M9.5 14.5a2.5 2.5 0 0 1 0-5"/><path d="M17 14.5a2.5 2.5 0 0 1 0-5"/></svg>
               {/if}
@@ -297,6 +304,8 @@
     flex-shrink: 0;
     padding-top: var(--space-2);
   }
+  .signed-in { padding: 8px 12px; color: var(--text-muted); font-size: var(--text-xs); overflow-wrap: anywhere; }
+  .signed-in strong { color: var(--text); font-weight: 600; }
 
   .logout-btn {
     display: flex;

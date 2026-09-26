@@ -7,9 +7,9 @@ For setup and Docker instructions, see the [project README](../README.md). Local
 Routes:
 
 - `GET /healthz`: public health check
-- `GET /api/auth/status`, `POST /api/auth/login`, `POST /api/auth/logout`: session login
+- `GET /api/auth/status`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/password`: account sessions and own-password changes
 - `GET /api/services`, `GET /api/services/:service/status`: configured services and health
-- `GET /api/admin/users`, `POST /api/admin/users`, `DELETE /api/admin/users/:username`: user management
+- `GET /api/admin/users`, `POST /api/admin/users`, `PUT /api/admin/users/:username/password`, `DELETE /api/admin/users/:username`: administrator-only user management
 - `/api/proxy/:service/*`: authenticated media service proxy
 
 Build the frontend from `frontend/` before running this server directly if you need the web interface. API tests use a mock database and a local mock upstream service.

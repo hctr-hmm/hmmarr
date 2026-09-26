@@ -1,3 +1,5 @@
+import { authStatus, navigate } from './stores.js';
+
 /**
  * Thin fetch wrapper.
  * All requests go to the backend (/api/*). The backend holds the real API keys.
@@ -21,7 +23,13 @@ async function request(method, path, body, signal) {
   const text = await res.text();
   let data;
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
-  if (!res.ok) throw Object.assign(new Error(data?.error || `HTTP ${res.status}`), { status: res.status, data });
+  if (!res.ok) {
+    if (res.status === 401 && data?.error === 'authentication_required') {
+      authStatus.set({ checked: true, authRequired: true, authenticated: false, user: null });
+      navigate('login');
+    }
+    throw Object.assign(new Error(data?.error || `HTTP ${res.status}`), { status: res.status, data });
+  }
   return data;
 }
 
@@ -36,11 +44,13 @@ export const api = {
   authStatus: ()                     => api.get('/api/auth/status'),
   login:      (username, password)   => api.post('/api/auth/login', { username, password }),
   logout:     ()                     => api.post('/api/auth/logout'),
+  changePassword: (currentPassword, newPassword) => api.post('/api/auth/password', { currentPassword, newPassword }),
 
   // Admin — user management
   admin: {
     listUsers:   ()                   => api.get('/api/admin/users'),
     createUser:  (username, password) => api.post('/api/admin/users', { username, password }),
+    resetPassword: (username, password) => api.put(`/api/admin/users/${encodeURIComponent(username)}/password`, { password }),
     deleteUser:  (username)           => api.delete(`/api/admin/users/${encodeURIComponent(username)}`),
   },
 
@@ -63,7 +73,13 @@ export const api = {
       const text = await res.text();
       let data;
       try { data = JSON.parse(text); } catch { data = { raw: text }; }
-      if (!res.ok) throw Object.assign(new Error(data?.error || `HTTP ${res.status}`), { status: res.status, data });
+      if (!res.ok) {
+        if (res.status === 401 && data?.error === 'authentication_required') {
+          authStatus.set({ checked: true, authRequired: true, authenticated: false, user: null });
+          navigate('login');
+        }
+        throw Object.assign(new Error(data?.error || `HTTP ${res.status}`), { status: res.status, data });
+      }
       return data;
     },
   }

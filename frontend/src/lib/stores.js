@@ -1,9 +1,9 @@
 import { writable, derived } from 'svelte/store';
 
 // Authentication state
-export const authStatus = writable({ checked: false, authRequired: false, authenticated: false });
+export const authStatus = writable({ checked: false, authRequired: false, authenticated: false, user: null });
 
-// Active route: 'login' | 'dashboard' | 'movies' | 'discover' | 'wanted' | 'collections' | 'series' | 'queue' | 'calendar' | 'history' | 'blocklist' | 'system' | 'prowlarr' | 'bazarr'
+// Active route: 'login' | 'dashboard' | 'movies' | 'discover' | 'wanted' | 'collections' | 'series' | 'queue' | 'calendar' | 'history' | 'blocklist' | 'system' | 'users' | 'prowlarr' | 'bazarr'
 export const route = writable('login');
 export const navigationSection = writable(null);
 

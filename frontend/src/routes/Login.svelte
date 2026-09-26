@@ -15,8 +15,8 @@
     error   = '';
     loading = true;
     try {
-      await api.login(username.trim(), password);
-      authStatus.update((s) => ({ ...s, authenticated: true }));
+      const result = await api.login(username.trim(), password);
+      authStatus.update((s) => ({ ...s, authenticated: true, user: result.user }));
       navigate('dashboard');
     } catch (err) {
       error    = err.status === 401 ? 'Incorrect username or password.' : 'Could not reach the server.';

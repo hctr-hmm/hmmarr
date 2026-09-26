@@ -1,6 +1,6 @@
 # Hmmarr
 
-A single web interface for Radarr, Sonarr, Bazarr, and Prowlarr. The interface includes sign-in, a dashboard with service activity, health warnings, and upcoming releases, and Radarr movie management: library, search and add, Discover, movie details, bulk editing, wanted lists, collections, download queue, release calendar, history, and blocklist. The System page shows status, health, and available storage details for all connected services. Sonarr's Series section includes a library, search and add, series settings, season and episode monitoring, searches, manual releases, missing episodes, queue, calendar, and history. Bazarr's Subtitles section includes movie and series libraries, language profiles, missing subtitle searches, manual search, subtitle uploads and deletion, wanted lists, history, and provider status. Prowlarr's Indexers section includes indexer and app management, release search and grabs, activity, statistics, and health.
+A single web interface for Radarr, Sonarr, Bazarr, and Prowlarr. The interface includes multi-user sign-in, a Users page for account management, a dashboard with service activity, health warnings, and upcoming releases, and Radarr movie management: library, search and add, Discover, movie details, bulk editing, wanted lists, collections, download queue, release calendar, history, and blocklist. The System page shows status, health, and available storage details for all connected services. Sonarr's Series section includes a library, search and add, series settings, season and episode monitoring, searches, manual releases, missing episodes, queue, calendar, and history. Bazarr's Subtitles section includes movie and series libraries, language profiles, missing subtitle searches, manual search, subtitle uploads and deletion, wanted lists, history, and provider status. Prowlarr's Indexers section includes indexer and app management, release search and grabs, activity, statistics, and health.
 
 ## Run with Docker Compose
 
@@ -10,6 +10,8 @@ A single web interface for Radarr, Sonarr, Bazarr, and Prowlarr. The interface i
 4. Run `docker compose up -d --build` and open port 3110 on this host. Sign in with the bootstrap credentials. Remove `HMMARR_BOOTSTRAP_PASS` from `.env` after the first user has been created.
 
 The database remains in the `hmmarr-pgdata` Docker volume. The backend keeps media service API keys server-side and exposes authenticated same-origin proxy routes. Use HTTPS and set `HMMARR_SECURE_COOKIES=true` when serving Hmmarr through a reverse proxy.
+
+The first account is the administrator. Open **Users** to add other accounts, reset their passwords, or remove them. All signed-in users can change their own password; only the administrator can manage accounts. New and changed passwords must have 12–256 characters. Updating from an older Hmmarr version signs everyone out once because sessions are now tied to individual accounts.
 
 ## Development
 
