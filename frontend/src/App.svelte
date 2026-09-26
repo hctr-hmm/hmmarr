@@ -16,6 +16,7 @@
   import Blocklist from './routes/Blocklist.svelte';
   import System from './routes/System.svelte';
   import Series from './routes/Series.svelte';
+  import Subtitles from './routes/Subtitles.svelte';
 
   const ROUTES = {
     dashboard: { component: Dashboard, title: '' },
@@ -30,7 +31,7 @@
     blocklist: { component: Blocklist, title: '' },
     system:    { component: System, title: '' },
     prowlarr:  { component: ComingSoon, title: 'Indexers' },
-    bazarr:    { component: ComingSoon, title: 'Subtitles' },
+    bazarr:    { component: Subtitles, title: '' },
   };
 
   // Bootstrap: check auth status on load

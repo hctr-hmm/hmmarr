@@ -24,12 +24,12 @@ before(async () => {
     }
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
-    const received = { method: request.method, url: request.url, apiKey: request.headers['x-api-key'], body: Buffer.concat(chunks).toString() };
+    const received = { method: request.method, url: request.url, apiKey: request.headers['x-api-key'], contentType: request.headers['content-type'], body: Buffer.concat(chunks).toString() };
     response.setHeader('content-type', 'application/json');
     response.end(JSON.stringify({ version: '1.2.3', received }));
   });
   const upstreamPort = await listen(upstream);
-  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret' });
+  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret', BAZARR_URL: `http://127.0.0.1:${upstreamPort}`, BAZARR_API_KEY: 'bazarr-secret' });
   const user = { id: 1, username, password_hash: await hashPassword(password) };
   const pool = { query: async (sql, params) => {
     if (sql.startsWith('SELECT id, username, password_hash')) return { rows: params[0] === username ? [user] : [] };
@@ -58,7 +58,7 @@ test('login creates a usable HttpOnly session', async () => {
   cookie = login.headers.get('set-cookie');
   assert.match(cookie, /HttpOnly/);
   const services = await fetch(`${baseUrl}/api/services`, { headers: { cookie } });
-  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }]);
+  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }, { name: 'bazarr', label: 'Bazarr', apiVersion: 'v1', configured: true }]);
 });
 
 test('proxy injects API key, strips supplied key, and forwards query', async () => {
@@ -72,6 +72,29 @@ test('proxy streams request bodies', async () => {
   const payload = JSON.stringify({ name: 'RescanMovie', movieIds: [1] });
   const response = await fetch(`${baseUrl}/api/proxy/radarr/api/v3/command`, { method: 'POST', headers: { cookie, 'content-type': 'application/json' }, body: payload });
   assert.equal((await response.json()).received.body, payload);
+});
+
+test('Bazarr proxy forwards query actions and subtitle uploads', async () => {
+  const action = await fetch(`${baseUrl}/api/proxy/bazarr/api/movies?radarrid=138&action=search-missing`, { method: 'PATCH', headers: { cookie } });
+  const actionResult = (await action.json()).received;
+  assert.equal(actionResult.method, 'PATCH');
+  assert.equal(actionResult.url, '/api/movies?radarrid=138&action=search-missing');
+  assert.equal(actionResult.apiKey, 'bazarr-secret');
+
+  const profile = await fetch(`${baseUrl}/api/proxy/bazarr/api/movies?radarrid=138&profileid=4`, { method: 'POST', headers: { cookie } });
+  const profileResult = (await profile.json()).received;
+  assert.equal(profileResult.method, 'POST');
+  assert.equal(profileResult.url, '/api/movies?radarrid=138&profileid=4');
+  assert.equal(profileResult.body, '');
+
+  const form = new FormData();
+  form.append('file', new Blob(['1\n00:00:01,000 --> 00:00:02,000\nHello'], { type: 'text/plain' }), 'subtitle.srt');
+  const upload = await fetch(`${baseUrl}/api/proxy/bazarr/api/movies/subtitles?radarrid=138&language=en&forced=false&hi=false`, { method: 'POST', headers: { cookie }, body: form });
+  const uploadResult = (await upload.json()).received;
+  assert.equal(uploadResult.method, 'POST');
+  assert.match(uploadResult.contentType, /multipart\/form-data/);
+  assert.match(uploadResult.body, /subtitle\.srt/);
+  assert.match(uploadResult.body, /Hello/);
 });
 
 test('proxy streams poster images and bulk DELETE requests', async () => {
