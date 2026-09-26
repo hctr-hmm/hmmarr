@@ -6,20 +6,29 @@
 
   const NAV = [
     { id: 'dashboard', label: 'Dashboard', icon: 'grid' },
-    { id: 'movies',    label: 'Movies',    icon: 'film' },
-    { id: 'discover',  label: 'Discover',  icon: 'search' },
-    { id: 'wanted',    label: 'Wanted',    icon: 'download' },
+    { id: 'movies', label: 'Movies', icon: 'film' },
+    { id: 'discover', label: 'Discover', icon: 'search' },
     { id: 'collections', label: 'Collections', icon: 'film' },
-    { id: 'series',    label: 'Series',    icon: 'tv' },
-    { id: 'queue',     label: 'Queue',     icon: 'download' },
-    { id: 'calendar',  label: 'Calendar',  icon: 'calendar' },
-    { id: 'history',   label: 'History',   icon: 'history' },
+    { id: 'wanted', label: 'Wanted', icon: 'download' },
+    { id: 'queue', label: 'Queue', icon: 'download' },
+    { id: 'calendar', label: 'Calendar', icon: 'calendar' },
+    { id: 'history', label: 'History', icon: 'history' },
     { id: 'blocklist', label: 'Blocklist', icon: 'download' },
-    { id: 'system',    label: 'System',    icon: 'grid' },
-    { id: 'prowlarr',  label: 'Indexers',  icon: 'search' },
-    { id: 'bazarr',    label: 'Subtitles', icon: 'cc' },
+    { id: 'series', label: 'Series', icon: 'tv' },
+    { id: 'bazarr', label: 'Subtitles', icon: 'cc' },
+    { id: 'prowlarr', label: 'Indexers', icon: 'search' },
+    { id: 'system', label: 'System', icon: 'grid' }
   ];
 
+  const RADARR_IDS = ['movies', 'discover', 'collections', 'wanted', 'queue', 'calendar', 'history', 'blocklist'];
+  const SERVICE_GROUPS = [
+    { id: 'radarr', label: 'Radarr', items: NAV.filter((item) => RADARR_IDS.includes(item.id)) },
+    { id: 'sonarr', label: 'Sonarr', items: NAV.filter((item) => item.id === 'series') },
+    { id: 'bazarr', label: 'Bazarr', items: NAV.filter((item) => item.id === 'bazarr') },
+    { id: 'prowlarr', label: 'Prowlarr', items: NAV.filter((item) => item.id === 'prowlarr') }
+  ];
+
+  let radarrExpanded = $state(false);
   let loggingOut = $state(false);
 
   async function logout() {
@@ -38,45 +47,81 @@
   const showLogout = $derived($authStatus.authRequired);
 </script>
 
+{#snippet sidebarItem(item)}
+  <li>
+    <button
+      class="nav-item"
+      class:active={$route === item.id}
+      aria-current={$route === item.id ? 'page' : undefined}
+      onclick={() => navigate(item.id)}
+    >
+      <span class="icon" aria-hidden="true">
+        {#if item.icon === 'grid'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        {:else if item.icon === 'film'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="7" y1="3" x2="7" y2="21"/><line x1="17" y1="3" x2="17" y2="21"/><line x1="2" y1="9" x2="7" y2="9"/><line x1="2" y1="15" x2="7" y2="15"/><line x1="17" y1="9" x2="22" y2="9"/><line x1="17" y1="15" x2="22" y2="15"/></svg>
+        {:else if item.icon === 'tv'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+        {:else if item.icon === 'download'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        {:else if item.icon === 'calendar'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        {:else if item.icon === 'history'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+        {:else if item.icon === 'search'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        {:else if item.icon === 'cc'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M9.5 14.5a2.5 2.5 0 0 1 0-5"/><path d="M17 14.5a2.5 2.5 0 0 1 0-5"/></svg>
+        {/if}
+      </span>
+      <span class="label">{item.label}</span>
+    </button>
+  </li>
+{/snippet}
+
 <div class="shell">
   <aside class="sidebar">
     <div class="brand">
       <img src="/hmmarr-logo.svg" alt="hmmarr" width="180" height="46" />
     </div>
 
-    <nav aria-label="Main navigation">
+    <nav class="sidebar-nav" aria-label="Main navigation">
       <ul class="nav-list">
-        {#each NAV as item (item.id)}
-          <li>
+        {@render sidebarItem(NAV[0])}
+      </ul>
+
+      {#each SERVICE_GROUPS as group (group.id)}
+        <section class="nav-group" aria-label={group.label}>
+          {#if group.id === 'radarr'}
             <button
-              class="nav-item"
-              class:active={$route === item.id}
-              aria-current={$route === item.id ? 'page' : undefined}
-              onclick={() => navigate(item.id)}
+              class="group-heading group-toggle"
+              class:current={group.items.some((item) => item.id === $route)}
+              aria-expanded={radarrExpanded}
+              onclick={() => radarrExpanded = !radarrExpanded}
             >
-              <span class="icon" aria-hidden="true">
-                {#if item.icon === 'grid'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                {:else if item.icon === 'film'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="7" y1="3" x2="7" y2="21"/><line x1="17" y1="3" x2="17" y2="21"/><line x1="2" y1="9" x2="7" y2="9"/><line x1="2" y1="15" x2="7" y2="15"/><line x1="17" y1="9" x2="22" y2="9"/><line x1="17" y1="15" x2="22" y2="15"/></svg>
-                {:else if item.icon === 'tv'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
-                {:else if item.icon === 'download'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                {:else if item.icon === 'calendar'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                {:else if item.icon === 'history'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
-                {:else if item.icon === 'search'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                {:else if item.icon === 'cc'}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M9.5 14.5a2.5 2.5 0 0 1 0-5"/><path d="M17 14.5a2.5 2.5 0 0 1 0-5"/></svg>
-                {/if}
-              </span>
-              <span class="label">{item.label}</span>
+              <span class="group-name"><span class="service-mark {group.id}" aria-hidden="true"></span>{group.label}</span>
+              <svg class:expanded={radarrExpanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
-          </li>
-        {/each}
+          {:else}
+            <div class="group-heading">
+              <span class="group-name"><span class="service-mark {group.id}" aria-hidden="true"></span>{group.label}</span>
+            </div>
+          {/if}
+          {#if group.id !== 'radarr' || radarrExpanded}
+            <ul class="nav-list group-items">
+              {#each group.items as item (item.id)}
+                {@render sidebarItem(item)}
+              {/each}
+            </ul>
+          {/if}
+        </section>
+      {/each}
+
+    </nav>
+
+    <nav class="nav-utility" aria-label="System navigation">
+      <ul class="nav-list">
+        {@render sidebarItem(NAV.find((item) => item.id === 'system'))}
       </ul>
     </nav>
 
@@ -162,7 +207,50 @@
     border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-4);
   }
-  .brand img { display: block; width: 100%; max-width: 180px; height: auto; }
+  .brand img { display: block; width: 100%; max-width: 168px; height: auto; }
+
+  .sidebar-nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-subtle) transparent;
+  }
+  .nav-group { margin-top: var(--space-4); }
+  .group-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 26px;
+    padding: 0 var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .group-name { display: flex; align-items: center; gap: 9px; }
+  .service-mark { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); }
+  .service-mark.radarr { background: var(--accent); }
+  .service-mark.sonarr { background: var(--blue); }
+  .service-mark.bazarr { background: var(--purple); }
+  .service-mark.prowlarr { background: var(--green); }
+  .group-toggle { border: 0; background: none; text-align: left; }
+  .group-toggle:hover { color: var(--text); }
+  .group-toggle.current { color: var(--accent); }
+  .group-toggle svg { width: 14px; height: 14px; transition: transform var(--trans); }
+  .group-toggle svg.expanded { transform: rotate(90deg); }
+  .group-items {
+    margin: 4px 0 0 14px;
+    padding-left: 9px;
+    border-left: 1px solid var(--border-subtle);
+  }
+  .nav-utility {
+    flex-shrink: 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
 
   .nav-list {
     list-style: none;
@@ -206,9 +294,8 @@
   }
 
   .sidebar-footer {
-    margin-top: auto;
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    padding-top: var(--space-2);
   }
 
   .logout-btn {
