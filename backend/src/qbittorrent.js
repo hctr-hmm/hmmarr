@@ -32,9 +32,9 @@ export function createQbittorrentClient(service, timeoutMs) {
         redirect: 'manual',
       });
       const body = await response.text();
-      const token = response.headers.get('set-cookie')?.match(/(?:^|,\s*)SID=([^;\s,]+)/)?.[1];
-      if (!response.ok || body.trim() !== 'Ok.' || !token) throw Object.assign(new Error('qBittorrent login failed'), { status: 502, code: 'qbittorrent_login_failed' });
-      sid = token;
+      const cookie = response.headers.get('set-cookie')?.match(/^([^=;,\s]+)=([^;,\s]+)/);
+      if (!response.ok || (body.trim() !== 'Ok.' && response.status !== 204) || !cookie) throw Object.assign(new Error('qBittorrent login failed'), { status: 502, code: 'qbittorrent_login_failed' });
+      sid = `${cookie[1]}=${cookie[2]}`;
     })().finally(() => { loginPromise = null; });
     return loginPromise;
   }
@@ -59,7 +59,7 @@ export function createQbittorrentClient(service, timeoutMs) {
       await login();
       const headers = { accept: kind === 'json' ? 'application/json' : 'text/plain', referer: origin, origin };
       if (service.apiKey) headers.authorization = `Bearer ${service.apiKey}`;
-      else headers.cookie = `SID=${sid}`;
+      else headers.cookie = sid;
       let body;
       if (method === 'POST' && route === 'torrents/add') {
         body = new FormData();

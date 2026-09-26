@@ -18,11 +18,12 @@ before(async () => {
     if (request.url === '/api/v2/auth/login') {
       assert.equal(request.headers.origin, url);
       assert.match(body, /username=service-user/);
-      response.setHeader('set-cookie', 'SID=private-session; path=/; HttpOnly');
-      response.end('Ok.');
+      response.setHeader('set-cookie', 'QBT_SID_8081=private-session; path=/; HttpOnly');
+      response.writeHead(204);
+      response.end();
       return;
     }
-    if (request.headers.cookie !== 'SID=private-session' && request.headers.authorization !== 'Bearer qbt_test_key') {
+    if (request.headers.cookie !== 'QBT_SID_8081=private-session' && request.headers.authorization !== 'Bearer qbt_test_key') {
       response.writeHead(403);
       response.end('Forbidden');
       return;
