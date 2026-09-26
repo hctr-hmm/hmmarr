@@ -24,18 +24,14 @@
     { id: 'users', label: 'Users', icon: 'users' }
   ];
 
-  const RADARR_IDS = ['movies', 'discover', 'collections', 'wanted', 'queue', 'calendar', 'history', 'blocklist'];
-  const SERVICE_GROUPS = [
-    { id: 'radarr', label: 'Radarr', items: NAV.filter((item) => RADARR_IDS.includes(item.id)) },
-    { id: 'sonarr', label: 'Sonarr', items: NAV.filter((item) => item.id === 'series') },
-    { id: 'bazarr', label: 'Bazarr', items: NAV.filter((item) => item.id === 'bazarr') },
-    { id: 'prowlarr', label: 'Prowlarr', items: NAV.filter((item) => item.id === 'prowlarr') },
-    { id: 'qbittorrent', label: 'qBittorrent', items: NAV.filter((item) => item.id === 'qbittorrent') },
-    { id: 'seerr', label: 'Seerr', items: NAV.filter((item) => item.id === 'seerr') },
-    { id: 'jellyfin', label: 'Jellyfin', items: NAV.filter((item) => item.id === 'jellyfin') }
+  const NAV_GROUPS = [
+    { label: 'Overview', ids: ['dashboard'] },
+    { label: 'Library', ids: ['movies', 'series', 'discover', 'collections'] },
+    { label: 'Activity', ids: ['wanted', 'queue', 'calendar', 'history', 'blocklist'] },
+    { label: 'Services', ids: ['bazarr', 'prowlarr', 'qbittorrent', 'seerr', 'jellyfin'] }
   ];
 
-  let radarrExpanded = $state(false);
+  let menuOpen = $state(false);
   let loggingOut = $state(false);
 
   async function logout() {
@@ -52,7 +48,14 @@
   }
 
   const showLogout = $derived($authStatus.authRequired);
+
+  function go(id) {
+    menuOpen = false;
+    navigate(id);
+  }
 </script>
+
+<svelte:window onkeydown={(event) => { if (event.key === 'Escape') menuOpen = false; }} />
 
 {#snippet sidebarItem(item)}
   <li>
@@ -60,7 +63,7 @@
       class="nav-item"
       class:active={$route === item.id}
       aria-current={$route === item.id ? 'page' : undefined}
-      onclick={() => navigate(item.id)}
+      onclick={() => go(item.id)}
     >
       <span class="icon" aria-hidden="true">
         {#if item.icon === 'grid'}
@@ -89,46 +92,36 @@
 {/snippet}
 
 <div class="shell">
-  <aside class="sidebar">
+  <header class="mobile-header">
+    <button class="menu-button" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} onclick={() => menuOpen = !menuOpen}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={menuOpen ? 'M5 5l14 14M19 5L5 19' : 'M4 7h16M4 12h16M4 17h16'}/></svg>
+    </button>
+    <img src="/hmmarr-logo.svg" alt="hmmarr" width="144" height="37" />
+    <span class="mobile-current">{NAV.find((item) => item.id === $route)?.label || 'Dashboard'}</span>
+  </header>
+  {#if menuOpen}<button class="menu-backdrop" aria-label="Close navigation" onclick={() => menuOpen = false}></button>{/if}
+  <aside class="sidebar" class:open={menuOpen}>
     <div class="brand">
       <img src="/hmmarr-logo.svg" alt="hmmarr" width="180" height="46" />
+      <span>YOUR MEDIA, IN ONE PLACE</span>
     </div>
 
     <nav class="sidebar-nav" aria-label="Main navigation">
-      <ul class="nav-list">
-        {@render sidebarItem(NAV[0])}
-      </ul>
-
-      {#each SERVICE_GROUPS as group (group.id)}
+      {#each NAV_GROUPS as group (group.label)}
         <section class="nav-group" aria-label={group.label}>
-          {#if group.id === 'radarr'}
-            <button
-              class="group-heading group-toggle"
-              class:current={group.items.some((item) => item.id === $route)}
-              aria-expanded={radarrExpanded}
-              onclick={() => radarrExpanded = !radarrExpanded}
-            >
-              <span class="group-name"><span class="service-mark {group.id}" aria-hidden="true"></span>{group.label}</span>
-              <svg class:expanded={radarrExpanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          {:else}
-            <div class="group-heading">
-              <span class="group-name"><span class="service-mark {group.id}" aria-hidden="true"></span>{group.label}</span>
-            </div>
-          {/if}
-          {#if group.id !== 'radarr' || radarrExpanded}
-            <ul class="nav-list group-items">
-              {#each group.items as item (item.id)}
+          <div class="group-heading">{group.label}</div>
+          <ul class="nav-list">
+              {#each NAV.filter((item) => group.ids.includes(item.id)) as item (item.id)}
                 {@render sidebarItem(item)}
               {/each}
-            </ul>
-          {/if}
+          </ul>
         </section>
       {/each}
 
     </nav>
 
-    <nav class="nav-utility" aria-label="System navigation">
+    <nav class="nav-utility" aria-label="Settings navigation">
+      <div class="group-heading">Settings</div>
       <ul class="nav-list">
         {@render sidebarItem(NAV.find((item) => item.id === 'system'))}
         {@render sidebarItem(NAV.find((item) => item.id === 'users'))}
@@ -137,7 +130,7 @@
 
     {#if showLogout}
       <div class="sidebar-footer">
-        {#if $authStatus.user}<p class="signed-in">Signed in as <strong>{$authStatus.user.username}</strong></p>{/if}
+        {#if $authStatus.user}<div class="signed-in"><span class="avatar">{$authStatus.user.username?.slice(0, 1).toUpperCase()}</span><span><small>Signed in as</small><strong>{$authStatus.user.username}</strong></span></div>{/if}
         <button class="logout-btn" onclick={logout} disabled={loggingOut}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span class="label">{loggingOut ? 'Signing out…' : 'Sign out'}</span>
@@ -150,45 +143,6 @@
     {@render children()}
   </main>
 
-  <!-- Mobile bottom tab bar -->
-  <nav class="tabbar" aria-label="Main navigation">
-    <ul>
-      {#each NAV as item (item.id)}
-        <li>
-          <button
-            class="tab"
-            class:active={$route === item.id}
-            aria-current={$route === item.id ? 'page' : undefined}
-            aria-label={item.label}
-            onclick={() => navigate(item.id)}
-          >
-            <span class="icon" aria-hidden="true">
-              {#if item.icon === 'grid'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-              {:else if item.icon === 'film'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="7" y1="3" x2="7" y2="21"/><line x1="17" y1="3" x2="17" y2="21"/><line x1="2" y1="9" x2="7" y2="9"/><line x1="2" y1="15" x2="7" y2="15"/><line x1="17" y1="9" x2="22" y2="9"/><line x1="17" y1="15" x2="22" y2="15"/></svg>
-              {:else if item.icon === 'tv'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
-              {:else if item.icon === 'download'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              {:else if item.icon === 'calendar'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {:else if item.icon === 'history'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
-              {:else if item.icon === 'search'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              {:else if item.icon === 'users'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><path d="M17 5a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5v1"/></svg>
-              {:else if item.icon === 'cc'}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M9.5 14.5a2.5 2.5 0 0 1 0-5"/><path d="M17 14.5a2.5 2.5 0 0 1 0-5"/></svg>
-              {/if}
-            </span>
-            <span class="tab-label">{item.label}</span>
-          </button>
-        </li>
-      {/each}
-    </ul>
-  </nav>
 </div>
 
 <style>
@@ -242,25 +196,6 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-  .group-name { display: flex; align-items: center; gap: 9px; }
-  .service-mark { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); }
-  .service-mark.radarr { background: var(--accent); }
-  .service-mark.sonarr { background: var(--blue); }
-  .service-mark.bazarr { background: var(--purple); }
-  .service-mark.prowlarr { background: var(--green); }
-  .service-mark.qbittorrent { background: var(--blue); }
-  .service-mark.seerr { background: var(--orange); }
-  .service-mark.jellyfin { background: var(--purple); }
-  .group-toggle { border: 0; background: none; text-align: left; }
-  .group-toggle:hover { color: var(--text); }
-  .group-toggle.current { color: var(--accent); }
-  .group-toggle svg { width: 14px; height: 14px; transition: transform var(--trans); }
-  .group-toggle svg.expanded { transform: rotate(90deg); }
-  .group-items {
-    margin: 4px 0 0 14px;
-    padding-left: 9px;
-    border-left: 1px solid var(--border-subtle);
   }
   .nav-utility {
     flex-shrink: 0;
@@ -348,61 +283,64 @@
     padding: var(--space-8);
   }
 
-  /* ---- Mobile tab bar ---- */
-  .tabbar {
-    display: none;
-  }
-
   @media (max-width: 720px) {
     .sidebar { display: none; }
 
     .content {
       padding: var(--space-5) var(--space-4) calc(var(--space-16) + var(--space-8));
     }
+  }
 
-    .tabbar {
-      display: block;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 20;
-      background: color-mix(in oklch, var(--surface) 92%, transparent);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid var(--border);
-      padding-bottom: env(safe-area-inset-bottom, 0);
-    }
-    .tabbar ul {
-      list-style: none;
-      display: flex;
-      overflow-x: auto;
-      align-items: stretch;
-    }
-    .tabbar li { flex: 0 0 68px; min-width: 0; }
-    .tab {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      width: 100%;
-      padding: var(--space-2) 0 var(--space-2);
-      background: none;
-      border: none;
-      color: var(--text-faint);
-      transition: color var(--trans);
-    }
-    .tab.active { color: var(--accent); }
-    .tab .icon svg { width: 19px; height: 19px; }
-    .tab-label {
-      font-size: 9px;
-      font-weight: 500;
-      letter-spacing: 0.01em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-      white-space: nowrap;
-    }
+  .shell { background: var(--bg); }
+  .sidebar {
+    width: 246px;
+    padding: 22px 12px 14px;
+    background: #111821;
+    border-right-color: var(--border);
+    z-index: 31;
+  }
+  .brand { display: grid; gap: 6px; padding: 0 13px 20px; margin-bottom: 0; border-bottom: 0; }
+  .brand img { max-width: 156px; }
+  .brand span { padding-left: 3px; color: var(--text-faint); font-size: 9px; font-weight: 700; letter-spacing: .16em; }
+  .sidebar-nav { padding: 0 3px; scrollbar-color: var(--border-subtle) transparent; }
+  .nav-group { margin: 0 0 13px; }
+  .group-heading {
+    min-height: auto;
+    padding: 14px 11px 8px;
+    color: var(--text-faint);
+    font-size: 10px;
+    letter-spacing: .14em;
+  }
+  .nav-list { gap: 2px; }
+  .nav-item { position: relative; min-height: 38px; padding: 8px 11px; color: var(--text-muted); font-size: 13px; border-radius: 9px; }
+  .nav-item:hover { background: #222c38; color: var(--text); }
+  .nav-item.active { background: #353024; color: var(--accent); font-weight: 650; }
+  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--accent); }
+  .icon svg { width: 18px; height: 18px; }
+  .nav-utility { padding: 2px 3px 0; border-top-color: var(--border); }
+  .sidebar-footer { display: grid; gap: 4px; margin: 10px 3px 0; padding-top: 12px; border-top: 1px solid var(--border); }
+  .signed-in { display: flex; align-items: center; gap: 10px; padding: 5px 8px; font-size: 12px; }
+  .signed-in > span:last-child { display: grid; gap: 2px; min-width: 0; }
+  .signed-in small { color: var(--text-faint); font-size: 10px; }
+  .signed-in strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .avatar { display: grid; place-items: center; width: 31px; height: 31px; flex: 0 0 31px; border-radius: 10px; background: var(--accent-dim); color: var(--accent); font-weight: 750; }
+  .logout-btn { min-height: 34px; padding: 7px 8px; font-size: 12px; }
+  .content {
+    padding: clamp(24px, 3.6vw, 56px);
+    background: radial-gradient(ellipse 80% 28% at 65% -10%, #17202a 0%, transparent 75%), var(--bg);
+  }
+  .mobile-header, .menu-backdrop { display: none; }
+
+  @media (max-width: 720px) {
+    .shell { display: block; }
+    .mobile-header { position: sticky; top: 0; z-index: 25; display: flex; align-items: center; gap: 13px; height: 62px; padding: 0 16px; border-bottom: 1px solid var(--border); background: #111821ed; backdrop-filter: blur(20px); }
+    .mobile-header img { width: 122px; height: auto; }
+    .mobile-current { min-width: 0; margin-left: auto; color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .menu-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); }
+    .menu-button svg { width: 19px; height: 19px; }
+    .menu-backdrop { display: block; position: fixed; inset: 0; z-index: 29; width: 100%; border: 0; background: #05080cc9; }
+    .sidebar { display: flex; position: fixed; top: 0; bottom: 0; left: 0; width: min(290px, 84vw); height: 100dvh; visibility: hidden; transform: translateX(-105%); transition: transform 220ms var(--ease-out), visibility 220ms; box-shadow: 16px 0 48px #0008; }
+    .sidebar.open { visibility: visible; transform: translateX(0); }
+    .content { padding: 25px 16px 48px; min-height: calc(100dvh - 62px); }
   }
 </style>

@@ -110,17 +110,20 @@
 <style>
   .section-tabs { border-bottom: 1px solid var(--border); padding-bottom: 12px; }
   .search { flex: 1; min-width: 180px; }
-  .series-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); gap: 18px; }
-  .series-card { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .series-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 18px; }
+  .series-card { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; overflow: hidden; box-shadow: 0 10px 26px #0003; transition: transform var(--trans), border-color var(--trans), box-shadow var(--trans); }
+  .series-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 18px 32px #0005; }
   .series-cover { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 2 / 3; border: 0; padding: 0; background: var(--surface-2); color: var(--text-faint); font-size: 36px; overflow: hidden; }
-  .series-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .series-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 280ms var(--ease-out); }
+  .series-card:hover .series-cover img { transform: scale(1.035); }
   .status { position: absolute; right: 8px; bottom: 8px; padding: 4px 7px; border-radius: 4px; color: var(--text); background: #111c; font-size: var(--text-xs); font-weight: 700; }
   .status.complete { color: var(--green); }
-  .series-info { display: grid; gap: 7px; padding: 10px; }
+  .series-info { display: grid; gap: 9px; padding: 13px; }
   .series-title { border: 0; padding: 0; background: none; color: var(--text); font-size: var(--text-sm); font-weight: 700; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .series-title:hover { color: var(--accent); }
   .progress { height: 4px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
   .progress span { display: block; height: 100%; background: var(--accent); }
   .monitor { width: fit-content; border: 0; padding: 0; background: none; color: var(--text-muted); font-size: var(--text-xs); }
   .monitor.on { color: var(--green); }
+  @media (max-width: 560px) { .series-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
 </style>

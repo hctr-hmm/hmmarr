@@ -116,24 +116,24 @@
 
   .card {
     width: 100%;
-    max-width: 380px;
+    max-width: 420px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: var(--space-8);
+    padding: clamp(24px, 5vw, 40px);
     display: flex;
     flex-direction: column;
     gap: var(--space-5);
     box-shadow:
       0 0 0 1px color-mix(in oklch, var(--text) 4%, transparent),
-      0 8px 32px oklch(0 0 0 / 0.5),
+      0 22px 70px oklch(0 0 0 / 0.5),
       0 2px 8px oklch(0 0 0 / 0.3);
   }
 
   .brand img { display: block; width: min(220px, 100%); height: auto; }
 
-  .title    { font-size: var(--text-lg); font-weight: 600; color: var(--text); letter-spacing: -0.01em; margin-top: calc(-1 * var(--space-2)); }
-  .subtitle { font-size: var(--text-sm); color: var(--text-muted); margin-top: calc(-1 * var(--space-3)); }
+  .title    { font-size: 1.8rem; font-weight: 780; color: var(--text); letter-spacing: -.04em; margin-top: 3px; }
+  .subtitle { font-size: var(--text-sm); color: var(--text-muted); margin-top: calc(-1 * var(--space-3)); line-height: 1.5; }
 
   form { display: flex; flex-direction: column; gap: var(--space-4); }
 
@@ -152,7 +152,7 @@
     background: var(--surface-2);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    padding: var(--space-3);
+    padding: 13px 14px;
     font-size: var(--text-sm);
     color: var(--text);
     transition: border-color var(--trans), box-shadow var(--trans);
@@ -172,7 +172,7 @@
     background: var(--surface-2);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    padding: var(--space-3) var(--space-10) var(--space-3) var(--space-3);
+    padding: 13px var(--space-10) 13px 14px;
     font-size: var(--text-sm);
     color: var(--text);
     transition: border-color var(--trans), box-shadow var(--trans);
@@ -218,9 +218,9 @@
     justify-content: center;
     gap: var(--space-2);
     width: 100%;
-    padding: var(--space-3) var(--space-4);
+    padding: 13px var(--space-4);
     background: var(--accent);
-    color: #0d1017;
+    color: #15130e;
     font-size: var(--text-sm);
     font-weight: 600;
     border: none;

@@ -24,6 +24,8 @@
   let pageError = $state('');
 
   const onlineCount = $derived(SERVICES.filter((service) => health[service.name]?.online).length);
+  const libraryTotal = $derived((details.radarr?.metrics?.[0]?.value || 0) + (details.sonarr?.metrics?.[0]?.value || 0));
+  const queuedTotal = $derived((details.radarr?.metrics?.[2]?.value || 0) + (details.sonarr?.metrics?.[2]?.value || 0));
   const alerts = $derived(SERVICES.flatMap((service) => {
     const status = health[service.name];
     if (status && !status.online && !status.unconfigured && !status.loading) {
@@ -253,6 +255,7 @@
 <div class="page">
   <header class="page-head">
     <div>
+      <span class="eyebrow">YOUR MEDIA AT A GLANCE</span>
       <h1 class="title">Dashboard</h1>
       <p class="subtitle">
         {#if loaded}
@@ -274,15 +277,22 @@
 
   {#if pageError}<p class="error" role="alert">{pageError}</p>{/if}
 
+  <div class="overview-strip" aria-label="Overview">
+    <div class="overview-item"><span class="overview-icon live">●</span><div><strong>{loaded ? onlineCount : '—'}<small> / {SERVICES.length}</small></strong><span>Services online</span></div></div>
+    <div class="overview-item"><span class="overview-icon library">▦</span><div><strong>{loaded ? libraryTotal : '—'}</strong><span>Movies &amp; series</span></div></div>
+    <div class="overview-item"><span class="overview-icon queue">↓</span><div><strong>{loaded ? queuedTotal : '—'}</strong><span>In download queues</span></div></div>
+    <div class="overview-item"><span class="overview-icon alert">!</span><div><strong>{loaded ? alerts.length : '—'}</strong><span>Need attention</span></div></div>
+  </div>
+
   <section class="section" aria-labelledby="services-heading">
     <div class="section-head"><h2 id="services-heading">Your services</h2><span>Live library and activity totals</span></div>
     <div class="grid">
       {#each SERVICES as service (service.name)}
         {@const status = health[service.name]}
         {@const data = details[service.name]}
-        <article class="card" class:unconfigured={status?.unconfigured}>
+        <article class={`card service-${service.name}`} class:unconfigured={status?.unconfigured}>
           <div class="card-head">
-            <h3>{service.label}</h3>
+            <h3><span class="service-icon" aria-hidden="true">{service.label.slice(0, 1)}</span>{service.label}</h3>
             <span class="state" class:good={status?.online && !status.loading} class:bad={status && !status.online && !status.unconfigured && !status.loading}>
               <span class="dot" aria-hidden="true"></span>
               {!status || status.loading ? 'Checking' : status.unconfigured ? 'Not configured' : status.online ? 'Online' : 'Offline'}
@@ -434,4 +444,57 @@
   .event-date { flex: 0 0 78px; color: var(--accent); font-size: var(--text-xs); font-weight: 700; }
   @media (max-width: 860px) { .grid, .lower-grid, .watch-list { grid-template-columns: 1fr; } }
   @media (max-width: 470px) { .page-head, .section-head { flex-direction: column; align-items: flex-start; } .metrics { gap: 5px; } .metric { padding: 8px; } .event-date { flex-basis: 66px; } }
+  .page { max-width: 1440px; gap: 30px; }
+  .eyebrow { display: block; margin-bottom: 8px; color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .17em; }
+  .title { font-size: var(--text-xl); font-weight: 780; letter-spacing: -.045em; }
+  .subtitle { margin-top: 8px; line-height: 1.5; }
+  .refresh-btn { min-height: 41px; padding: 9px 14px; font-weight: 650; background: var(--surface-2); border-color: var(--border); }
+  .refresh-btn:hover:not(:disabled) { border-color: var(--accent); }
+  .overview-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--border); box-shadow: 0 18px 50px #0002; }
+  .overview-item { display: flex; align-items: center; gap: 15px; min-width: 0; min-height: 98px; padding: 18px 20px; background: #18212b; }
+  .overview-item > div { display: grid; gap: 3px; min-width: 0; }
+  .overview-item strong { color: var(--text); font-size: 26px; font-weight: 780; line-height: 1; letter-spacing: -.04em; }
+  .overview-item strong small { color: var(--text-faint); font-size: 14px; font-weight: 500; }
+  .overview-item div > span { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+  .overview-icon { display: grid; place-items: center; width: 37px; height: 37px; flex: 0 0 37px; border-radius: 11px; font-size: 21px; font-weight: 600; }
+  .overview-icon.live { color: var(--green); background: #92dc8f1c; font-size: 15px; }
+  .overview-icon.library { color: var(--blue); background: #70c8eb1c; }
+  .overview-icon.queue { color: var(--accent); background: #f0bd621c; }
+  .overview-icon.alert { color: var(--orange); background: #f4aa701c; }
+  .section-head h2, .panel-head h2 { font-size: 18px; letter-spacing: -.025em; }
+  .section-head span { font-size: 12px; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .card, .panel { padding: 21px; background: var(--surface); box-shadow: 0 8px 24px #0000001a; }
+  .card { position: relative; overflow: hidden; gap: 18px; min-height: 196px; transition: transform var(--trans), border-color var(--trans); }
+  .card:hover { transform: translateY(-2px); border-color: var(--border-subtle); }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--service-color, var(--accent)); opacity: .8; }
+  .service-radarr { --service-color: var(--accent); }
+  .service-sonarr { --service-color: var(--blue); }
+  .service-bazarr { --service-color: var(--purple); }
+  .service-prowlarr { --service-color: var(--green); }
+  .service-qbittorrent { --service-color: var(--blue); }
+  .service-seerr { --service-color: var(--orange); }
+  .service-jellyfin { --service-color: var(--purple); }
+  .card.unconfigured { opacity: .72; }
+  .card-head h3 { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+  .service-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; color: var(--service-color); background: color-mix(in srgb, var(--service-color) 14%, transparent); font-size: 15px; font-weight: 780; }
+  .state { font-weight: 650; }
+  .metrics { gap: 4px; }
+  .metric { gap: 4px; padding: 9px 7px 9px 0; border: 0; border-radius: 0; border-right: 1px solid var(--border); background: transparent; }
+  .metric:last-child { border-right: 0; padding-left: 7px; }
+  .metric:nth-child(2) { padding-left: 7px; }
+  .metric:hover { background: #ffffff08; border-color: var(--border); }
+  .metric strong { font-size: 24px; letter-spacing: -.04em; }
+  .metric span { font-size: 11px; line-height: 1.35; }
+  .card-foot { padding-top: 13px; }
+  .card-foot button, .panel-head button { color: var(--accent); }
+  .panel { gap: 18px; }
+  .now-watching { gap: 12px; }
+  .now-watching .empty { padding: 8px 0 3px; }
+  .lower-grid { gap: 14px; }
+  .list-row, .event-row { padding: 14px 0; }
+  .list-row p, .event-info span { font-size: 12px; }
+  @media (max-width: 1180px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .overview-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 820px) { .grid, .lower-grid, .watch-list { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { .page { gap: 24px; } .overview-item { min-height: 86px; padding: 12px; gap: 9px; } .overview-icon { width: 30px; height: 30px; flex-basis: 30px; } .overview-item strong { font-size: 22px; } .overview-item div > span { font-size: 10px; white-space: normal; } .card { min-height: 186px; } }
 </style>

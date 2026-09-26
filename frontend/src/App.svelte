@@ -81,34 +81,34 @@
 <style>
   :global(*, *::before, *::after) { box-sizing: border-box; margin: 0; padding: 0; }
   :global(:root) {
-    --bg:             #0d1017;
-    --surface:        #131721;
-    --surface-2:      #1a2031;
-    --surface-3:      #1e2432;
-    --border:         #1e2432;
-    --border-subtle:  #252d3d;
-    --text:           #bfbdb6;
-    --text-muted:     #5c6773;
-    --text-faint:     #3d4554;
-    --accent:         #e6b450;
-    --accent-dim:     color-mix(in oklch, #e6b450 20%, #131721);
-    --blue:           #39bae6;
-    --green:          #7fd962;
-    --red:            #f07178;
-    --orange:         #ff8f40;
-    --purple:         #d2a6ff;
-    --radius-sm:      4px;
-    --radius-md:      6px;
-    --radius-lg:      10px;
+    --bg:             #0b0f16;
+    --surface:        #151b25;
+    --surface-2:      #1b2430;
+    --surface-3:      #263242;
+    --border:         #293443;
+    --border-subtle:  #354354;
+    --text:           #f3f5f7;
+    --text-muted:     #a8b5c3;
+    --text-faint:     #8291a2;
+    --accent:         #f0bd62;
+    --accent-dim:     #3d3125;
+    --blue:           #70c8eb;
+    --green:          #92dc8f;
+    --red:            #ff838b;
+    --orange:         #f4aa70;
+    --purple:         #c8adf3;
+    --radius-sm:      6px;
+    --radius-md:      10px;
+    --radius-lg:      16px;
     --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
     --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
     --space-12: 48px; --space-16: 64px;
-    --font-body: 'Satoshi', system-ui, sans-serif;
-    --text-xs:   clamp(0.75rem, 0.7rem + 0.2vw, 0.8125rem);
-    --text-sm:   clamp(0.8125rem, 0.78rem + 0.25vw, 0.9375rem);
-    --text-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
-    --text-lg:   clamp(1rem, 0.95rem + 0.35vw, 1.25rem);
-    --text-xl:   clamp(1.25rem, 1.1rem + 0.8vw, 1.75rem);
+    --font-body: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --text-xs:   0.78rem;
+    --text-sm:   0.9rem;
+    --text-base: 1rem;
+    --text-lg:   1.25rem;
+    --text-xl:   clamp(1.8rem, 1.35rem + 1.5vw, 2.4rem);
     --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
     --trans: 160ms var(--ease-out);
   }
@@ -121,7 +121,12 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-  :global(body) { min-height: 100dvh; }
+  :global(body) { min-height: 100dvh; background: var(--bg); }
+  :global(button), :global(input), :global(select), :global(textarea) { font: inherit; }
+  :global(button), :global(a), :global(input), :global(select), :global(textarea) { -webkit-tap-highlight-color: transparent; }
+  :global(button:disabled) { cursor: not-allowed; }
+  :global(::-webkit-scrollbar) { width: 9px; height: 9px; }
+  :global(::-webkit-scrollbar-thumb) { background: var(--border-subtle); border: 2px solid var(--bg); border-radius: 99px; }
   :global(button) { cursor: pointer; font-family: inherit; }
   :global(input) { font-family: inherit; }
   :global(:focus-visible) {
