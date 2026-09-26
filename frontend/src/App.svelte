@@ -18,6 +18,7 @@
   import Series from './routes/Series.svelte';
   import Subtitles from './routes/Subtitles.svelte';
   import Indexers from './routes/Indexers.svelte';
+  import Torrents from './routes/Torrents.svelte';
 
   const ROUTES = {
     dashboard: { component: Dashboard, title: '' },
@@ -33,6 +34,7 @@
     system:    { component: System, title: '' },
     users:     { component: Users, title: '' },
     prowlarr:  { component: Indexers, title: '' },
+    qbittorrent: { component: Torrents, title: '' },
     bazarr:    { component: Subtitles, title: '' },
   };
 

@@ -7,7 +7,8 @@
     { name: 'radarr', label: 'Radarr', base: '/api/v3', diskSpace: true },
     { name: 'sonarr', label: 'Sonarr', base: '/api/v3', diskSpace: true },
     { name: 'bazarr', label: 'Bazarr', base: '/api', diskSpace: false },
-    { name: 'prowlarr', label: 'Prowlarr', base: '/api/v1', diskSpace: false }
+    { name: 'prowlarr', label: 'Prowlarr', base: '/api/v1', diskSpace: false },
+    { name: 'qbittorrent', label: 'qBittorrent', base: '/api/v2', diskSpace: false }
   ];
 
   let serviceData = $state({});
@@ -39,6 +40,24 @@
 
   async function loadService(service, configured) {
     if (!configured) return { unconfigured: true };
+
+    if (service.name === 'qbittorrent') {
+      try {
+        const [version, apiVersion, transfer] = await Promise.all([
+          api.qbittorrent.get('app/version'),
+          api.qbittorrent.get('app/webapiVersion'),
+          api.qbittorrent.get('transfer/info')
+        ]);
+        return { fields: [
+          ['Version', version], ['Web API', apiVersion],
+          ['Connection', transfer.connection_status],
+          ['Download speed', formatBytes(transfer.dl_info_speed) + '/s'],
+          ['Upload speed', formatBytes(transfer.up_info_speed) + '/s'],
+          ['Downloaded this session', formatBytes(transfer.dl_info_data)],
+          ['Uploaded this session', formatBytes(transfer.up_info_data)]
+        ], health: [], healthError: '', disks: [], diskError: '' };
+      } catch (cause) { return { offline: true, error: errorMessage(cause) }; }
+    }
 
     let status;
     try {
@@ -120,7 +139,7 @@
             {#if data.healthError}
               <p class="rad-error" role="alert">Could not load health: {data.healthError}</p>
             {:else if data.health.length === 0}
-              <p class="rad-success">No health issues reported.</p>
+              <p class="rad-success">{service.name === 'qbittorrent' ? 'Connection details are shown above.' : 'No health issues reported.'}</p>
             {:else}
               <div class="rad-list">
                 {#each data.health as item, index (item.source + '-' + index)}

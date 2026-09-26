@@ -58,6 +58,11 @@ export const api = {
   services:      ()     => api.get('/api/services'),
   serviceStatus: (name) => api.get(`/api/services/${name}/status`),
 
+  qbittorrent: {
+    get: (route, params) => api.get(`/api/qbittorrent/${route}${params ? '?' + new URLSearchParams(params).toString() : ''}`),
+    post: (route, body) => api.post(`/api/qbittorrent/${route}`, body),
+  },
+
   // Proxy helpers
   proxy: {
     get:    (service, path, params, signal) => { const qs = params ? '?' + new URLSearchParams(params).toString() : ''; return request('GET', `/api/proxy/${service}${path}${qs}`, undefined, signal); },

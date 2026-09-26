@@ -10,6 +10,7 @@ import { clearSessionCookie, createSessionCookie, hashPassword, readSessionCooki
 import { getPool, migrate, findUserByUsername, findUserById, createUser, listUsers, updateUserPassword, deleteUser, userCount } from './db.js';
 import { probeService, proxyRequest } from './proxy.js';
 import { createPosterHandler } from './posters.js';
+import { createQbittorrentClient } from './qbittorrent.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 const STATIC_DIR = fileURLToPath(new URL('../static/', import.meta.url));
@@ -67,6 +68,7 @@ const log = (level, event, fields = {}) =>
 
 export function createAppServer(config, pool) {
   const servePoster = createPosterHandler();
+  const qbittorrent = config.services.qbittorrent ? createQbittorrentClient(config.services.qbittorrent, config.requestTimeoutMs) : null;
   return http.createServer(async (request, response) => {
     const started = performance.now();
     const requestId = request.headers['x-request-id'] || randomUUID();
@@ -144,12 +146,31 @@ export function createAppServer(config, pool) {
       if (request.method === 'GET' && pathname === '/api/services')
         return sendJson(response, 200, Object.values(config.services).map(publicService));
 
-      const statusMatch = pathname.match(/^\/api\/services\/(radarr|sonarr|bazarr|prowlarr)\/status$/);
+      const statusMatch = pathname.match(/^\/api\/services\/(radarr|sonarr|bazarr|prowlarr|qbittorrent)\/status$/);
       if (request.method === 'GET' && statusMatch) {
         const service = config.services[statusMatch[1]];
         if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
+        if (service.name === 'qbittorrent') {
+          try {
+            const version = await qbittorrent.call('app/version');
+            return sendJson(response, 200, { name: service.name, label: service.label, online: true, version: version.replace(/^v/, ''), appName: service.label });
+          } catch (cause) {
+            return sendJson(response, 502, { name: service.name, label: service.label, online: false, error: cause.code || 'unreachable' });
+          }
+        }
         const result = await probeService(service, config.statusTimeoutMs);
         return sendJson(response, result.online ? 200 : 502, result);
+      }
+
+      const qbMatch = pathname.match(/^\/api\/qbittorrent\/(app|transfer|torrents)\/([A-Za-z]+)$/);
+      if (qbMatch) {
+        if (!qbittorrent) return sendJson(response, 404, { error: 'service_not_configured', requestId });
+        try {
+          const params = request.method === 'GET' ? Object.fromEntries(parsed.searchParams) : await readJson(request);
+          return sendJson(response, 200, await qbittorrent.call(`${qbMatch[1]}/${qbMatch[2]}`, request.method, params));
+        } catch (cause) {
+          return sendJson(response, cause.status || 502, { error: cause.code || 'qbittorrent_unavailable', requestId });
+        }
       }
 
       // ── Admin: user management ─────────────────────────────────────────────

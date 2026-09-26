@@ -43,6 +43,18 @@ export function loadConfig(env = process.env) {
     }
   }
 
+  const qbUrl = env.QBITTORRENT_URL?.trim();
+  const qbKey = env.QBITTORRENT_API_KEY?.trim();
+  const qbUser = env.QBITTORRENT_USERNAME?.trim();
+  const qbPass = env.QBITTORRENT_PASSWORD?.trim();
+  if (qbUrl && (qbKey || (qbUser && qbPass))) {
+    try {
+      services.qbittorrent = Object.freeze({ name: 'qbittorrent', label: 'qBittorrent', apiVersion: 'v2', url: normalizeBaseUrl(qbUrl, 'QBITTORRENT_URL'), apiKey: qbKey || null, username: qbUser || null, password: qbPass || null });
+    } catch (error) { errors.push(error.message); }
+  } else if (qbUrl || qbKey || qbUser || qbPass) {
+    errors.push('QBITTORRENT_URL and either QBITTORRENT_API_KEY or QBITTORRENT_USERNAME plus QBITTORRENT_PASSWORD must be set together');
+  }
+
   // Database
   const databaseUrl = env.DATABASE_URL?.trim();
   if (!databaseUrl) errors.push('DATABASE_URL is required');

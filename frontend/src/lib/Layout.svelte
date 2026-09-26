@@ -17,6 +17,7 @@
     { id: 'series', label: 'Series', icon: 'tv' },
     { id: 'bazarr', label: 'Subtitles', icon: 'cc' },
     { id: 'prowlarr', label: 'Indexers', icon: 'search' },
+    { id: 'qbittorrent', label: 'Torrents', icon: 'download' },
     { id: 'system', label: 'System', icon: 'grid' },
     { id: 'users', label: 'Users', icon: 'users' }
   ];
@@ -26,7 +27,8 @@
     { id: 'radarr', label: 'Radarr', items: NAV.filter((item) => RADARR_IDS.includes(item.id)) },
     { id: 'sonarr', label: 'Sonarr', items: NAV.filter((item) => item.id === 'series') },
     { id: 'bazarr', label: 'Bazarr', items: NAV.filter((item) => item.id === 'bazarr') },
-    { id: 'prowlarr', label: 'Prowlarr', items: NAV.filter((item) => item.id === 'prowlarr') }
+    { id: 'prowlarr', label: 'Prowlarr', items: NAV.filter((item) => item.id === 'prowlarr') },
+    { id: 'qbittorrent', label: 'qBittorrent', items: NAV.filter((item) => item.id === 'qbittorrent') }
   ];
 
   let radarrExpanded = $state(false);
@@ -243,6 +245,7 @@
   .service-mark.sonarr { background: var(--blue); }
   .service-mark.bazarr { background: var(--purple); }
   .service-mark.prowlarr { background: var(--green); }
+  .service-mark.qbittorrent { background: var(--blue); }
   .group-toggle { border: 0; background: none; text-align: left; }
   .group-toggle:hover { color: var(--text); }
   .group-toggle.current { color: var(--accent); }

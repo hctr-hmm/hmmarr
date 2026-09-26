@@ -8,7 +8,8 @@
     { name: 'radarr', label: 'Radarr', route: 'movies' },
     { name: 'sonarr', label: 'Sonarr', route: 'series' },
     { name: 'bazarr', label: 'Bazarr', route: 'bazarr' },
-    { name: 'prowlarr', label: 'Prowlarr', route: 'prowlarr' }
+    { name: 'prowlarr', label: 'Prowlarr', route: 'prowlarr' },
+    { name: 'qbittorrent', label: 'qBittorrent', route: 'qbittorrent' }
   ];
 
   let health = $derived($serviceHealth);
@@ -75,6 +76,10 @@
       health: ['/api/system/health'],
       providers: ['/api/providers']
     };
+    if (name === 'qbittorrent') return {
+      torrents: ['/api/qbittorrent/torrents/info'],
+      transfer: ['/api/qbittorrent/transfer/info']
+    };
     return {
       indexers: ['/api/v1/indexer'],
       failing: ['/api/v1/indexerstatus'],
@@ -84,7 +89,7 @@
 
   function summarize(name, data, partial) {
     const healthResponse = data.health?.data ?? data.health;
-    const issues = Array.isArray(healthResponse) ? [...healthResponse] : [{ type: 'warning', message: 'Health information could not be loaded.' }];
+    const issues = name === 'qbittorrent' ? [] : Array.isArray(healthResponse) ? [...healthResponse] : [{ type: 'warning', message: 'Health information could not be loaded.' }];
     const providerList = data.providers?.data;
     if (name === 'bazarr' && Array.isArray(providerList)) {
       for (const provider of providerList.filter((item) => item.status !== 'Good')) {
@@ -131,6 +136,13 @@
         { label: 'Episodes need subs', value: count(data.episodes?.total), route: 'bazarr', section: { tab: 'wanted', mode: 'episode' } },
         { label: 'Provider issues', value: Array.isArray(providerList) ? providerList.filter((provider) => provider.status !== 'Good').length : null, route: 'bazarr', section: 'providers' }
       );
+    } else if (name === 'qbittorrent') {
+      const torrents = Array.isArray(data.torrents) ? data.torrents : null;
+      metrics.push(
+        { label: 'Torrents', value: torrents?.length ?? null, route: 'qbittorrent' },
+        { label: 'Downloading', value: torrents?.filter((item) => item.progress < 1 && !/paused|stopped/i.test(item.state || '')).length ?? null, route: 'qbittorrent' },
+        { label: 'Completed', value: torrents?.filter((item) => item.progress >= 1).length ?? null, route: 'qbittorrent' }
+      );
     } else {
       const indexers = Array.isArray(data.indexers) ? data.indexers : null;
       metrics.push(
@@ -148,7 +160,7 @@
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15_000);
     try {
-      const results = await Promise.allSettled(entries.map(([, [path, params]]) => api.proxy.get(name, path, params, controller.signal)));
+      const results = await Promise.allSettled(entries.map(([, [path, params]]) => name === 'qbittorrent' ? api.get(path) : api.proxy.get(name, path, params, controller.signal)));
       const data = {};
       entries.forEach(([key], index) => {
         data[key] = results[index].status === 'fulfilled' ? results[index].value : null;
