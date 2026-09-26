@@ -5,6 +5,7 @@ export const authStatus = writable({ checked: false, authRequired: false, authen
 
 // Active route: 'login' | 'dashboard' | 'movies' | 'discover' | 'wanted' | 'collections' | 'series' | 'queue' | 'calendar' | 'history' | 'blocklist' | 'system' | 'prowlarr' | 'bazarr'
 export const route = writable('login');
+export const navigationSection = writable(null);
 
 // Services list from /api/services
 export const services = writable([]);
@@ -17,6 +18,7 @@ export const isAuthenticated = derived(
   ($a) => !$a.authRequired || $a.authenticated
 );
 
-export function navigate(to) {
+export function navigate(to, section = null) {
+  navigationSection.set(section);
   route.set(to);
 }

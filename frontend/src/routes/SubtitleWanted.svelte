@@ -4,6 +4,7 @@
   import { errorMessage } from '../lib/radarr.js';
   import SubtitleManual from './SubtitleManual.svelte';
 
+  let { initialMode = 'movie' } = $props();
   let mode = $state('movie');
   let movies = $state([]);
   let episodes = $state([]);
@@ -29,7 +30,7 @@
     catch (cause) { error = errorMessage(cause); }
     finally { loading = false; }
   }
-  onMount(load);
+  onMount(() => { mode = initialMode; load(); });
 
   const visible = $derived((mode === 'movie' ? movies : episodes).filter((item) => `${item.title || item.seriesTitle} ${item.episodeTitle || ''}`.toLowerCase().includes(query.trim().toLowerCase())));
 

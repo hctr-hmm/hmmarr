@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { navigationSection } from '../lib/stores.js';
   import { errorMessage } from '../lib/radarr.js';
   import { bazarr, mediaPosterUrl, subtitleLabel } from '../lib/bazarr.js';
   import SubtitleDetail from './SubtitleDetail.svelte';
@@ -13,7 +14,9 @@
     { id: 'history', label: 'History' },
     { id: 'providers', label: 'Providers' },
   ];
-  let tab = $state('movies');
+  const initialNavigation = $navigationSection;
+  let tab = $state(typeof initialNavigation === 'string' ? initialNavigation : initialNavigation?.tab || 'movies');
+  let wantedMode = $state(initialNavigation?.mode || 'movie');
   let movies = $state([]);
   let series = $state([]);
   let profiles = $state([]);
@@ -93,7 +96,7 @@
       <div class="rad-row-main"><button class="item-title" onclick={() => selected = { kind, item }}>{item.title} ({item.year || '—'})</button><span class="rad-row-meta">{kind === 'movie' ? `${item.subtitles?.length || 0} subtitles` : `${item.episodeFileCount || 0} episode files`} · {item.monitored ? 'Monitored' : 'Unmonitored'}</span><div class="language-tags">{#if kind === 'movie'}{#each (item.missing_subtitles || []).slice(0, 4) as sub}<span class="rad-badge warn">Missing {subtitleLabel(sub)}</span>{/each}{:else if item.episodeMissingCount}<span class="rad-badge warn">{item.episodeMissingCount} episodes missing subtitles</span>{/if}</div></div>
       <div class="row-actions"><label class="rad-field">Language profile<select class="rad-select" value={String(item.profileId ?? 'none')} onchange={(event) => assignProfile(kind, item, event.currentTarget.value)} disabled={busyId === `${kind}-${id}`}><option value="none">None</option>{#each profiles as profile}<option value={String(profile.profileId)}>{profile.name}</option>{/each}</select></label><div class="rad-actions"><button class="rad-button" onclick={() => selected = { kind, item }}>Details</button><button class="rad-button" onclick={() => searchMissing(kind, item)} disabled={busyId === `${kind}-${id}`}>Search missing</button></div></div>
     </article>{/each}</div>{/if}
-  {:else if tab === 'wanted'}<SubtitleWanted />
+  {:else if tab === 'wanted'}<SubtitleWanted initialMode={wantedMode} />
   {:else}<SubtitleActivity view={tab} />{/if}
 </div>
 

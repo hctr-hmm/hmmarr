@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { api } from '../lib/api.js';
+  import { navigationSection } from '../lib/stores.js';
   import { errorMessage } from '../lib/radarr.js';
   import ProwlarrEditor from './ProwlarrEditor.svelte';
   import ProwlarrSearch from './ProwlarrSearch.svelte';
@@ -12,7 +13,8 @@
     { id: 'activity', label: 'Activity' },
     { id: 'apps', label: 'Apps' },
   ];
-  let tab = $state('indexers');
+  const initialNavigation = $navigationSection;
+  let tab = $state(initialNavigation?.tab || 'indexers');
   let indexers = $state([]);
   let statuses = $state([]);
   let stats = $state([]);
@@ -23,7 +25,7 @@
   let error = $state('');
   let notice = $state('');
   let query = $state('');
-  let filter = $state('all');
+  let filter = $state(initialNavigation?.filter || 'all');
   let busy = $state('');
   let editor = $state(null);
 

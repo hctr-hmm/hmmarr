@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { api } from '../lib/api.js';
+  import { navigationSection } from '../lib/stores.js';
   import { seriesPosterUrl } from '../lib/sonarr.js';
   import { formatBytes, errorMessage } from '../lib/radarr.js';
   import AddSeries from './AddSeries.svelte';
@@ -14,7 +15,7 @@
     { id: 'calendar', label: 'Calendar' },
     { id: 'history', label: 'History' },
   ];
-  let section = $state('library');
+  let section = $state($navigationSection || 'library');
   let series = $state([]);
   let loading = $state(true);
   let error = $state('');
