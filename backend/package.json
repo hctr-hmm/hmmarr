@@ -1,0 +1,17 @@
+{
+  "name": "hmmarr-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend API gateway for Hmmarr",
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "lint": "node --check src/*.js test/*.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "pg": "^8.13.3"
+  }
+}

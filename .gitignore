@@ -15,8 +15,13 @@ build/
 
 # macOS
 .DS_Store
+._*
 .AppleDouble
 .LSOverride
+
+# Local backups and generated frontend
+old/
+backend/static/
 
 # Archives
 *.tar.gz

@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: hmmarr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hmmarr
+      POSTGRES_USER: hmmarr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - hmmarr-pgdata:/var/lib/postgresql/data
+    networks: [media]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hmmarr -d hmmarr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hmmarr:
+    build: .
+    container_name: hmmarr
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3110:3000"
+    environment:
+      DATABASE_URL: postgres://hmmarr:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/hmmarr
+      HMMARR_SESSION_SECRET: ${HMMARR_SESSION_SECRET:?set HMMARR_SESSION_SECRET}
+      HMMARR_SECURE_COOKIES: ${HMMARR_SECURE_COOKIES:-false}
+      # Seed the first admin user on a fresh DB. Remove after first boot.
+      HMMARR_BOOTSTRAP_USER: ${HMMARR_BOOTSTRAP_USER:-admin}
+      HMMARR_BOOTSTRAP_PASS: ${HMMARR_BOOTSTRAP_PASS:-}
+      # Optional: media services
+      RADARR_URL: ${RADARR_URL:-http://radarr:7878}
+      RADARR_API_KEY: ${RADARR_API_KEY:-}
+      SONARR_URL: ${SONARR_URL:-http://sonarr:8989}
+      SONARR_API_KEY: ${SONARR_API_KEY:-}
+      BAZARR_URL: ${BAZARR_URL:-http://bazarr:6767}
+      BAZARR_API_KEY: ${BAZARR_API_KEY:-}
+      PROWLARR_URL: ${PROWLARR_URL:-http://prowlarr:9696}
+      PROWLARR_API_KEY: ${PROWLARR_API_KEY:-}
+    networks: [media, upstreams]
+
+volumes:
+  hmmarr-pgdata:
+
+networks:
+  media:
+  upstreams:
+    external: true
+    name: ${MEDIA_NETWORK:-compose_default}
