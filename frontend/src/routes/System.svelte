@@ -8,7 +8,8 @@
     { name: 'sonarr', label: 'Sonarr', base: '/api/v3', diskSpace: true },
     { name: 'bazarr', label: 'Bazarr', base: '/api', diskSpace: false },
     { name: 'prowlarr', label: 'Prowlarr', base: '/api/v1', diskSpace: false },
-    { name: 'qbittorrent', label: 'qBittorrent', base: '/api/v2', diskSpace: false }
+    { name: 'qbittorrent', label: 'qBittorrent', base: '/api/v2', diskSpace: false },
+    { name: 'seerr', label: 'Seerr', base: '/api/v1', diskSpace: false }
   ];
 
   let serviceData = $state({});
@@ -40,6 +41,22 @@
 
   async function loadService(service, configured) {
     if (!configured) return { unconfigured: true };
+
+    if (service.name === 'seerr') {
+      try {
+        const [status, counts] = await Promise.all([
+          api.proxy.get('seerr', '/api/v1/status'),
+          api.proxy.get('seerr', '/api/v1/request/count')
+        ]);
+        return { fields: [
+          ['Version', status.version || status.commitTag || '—'],
+          ['Requests', counts.total ?? 0],
+          ['Pending', counts.pending ?? 0],
+          ['Approved', counts.approved ?? 0],
+          ['Available', counts.available ?? 0]
+        ], health: [], healthError: '', disks: [], diskError: '' };
+      } catch (cause) { return { offline: true, error: errorMessage(cause) }; }
+    }
 
     if (service.name === 'qbittorrent') {
       try {
@@ -139,7 +156,7 @@
             {#if data.healthError}
               <p class="rad-error" role="alert">Could not load health: {data.healthError}</p>
             {:else if data.health.length === 0}
-              <p class="rad-success">{service.name === 'qbittorrent' ? 'Connection details are shown above.' : 'No health issues reported.'}</p>
+              <p class="rad-success">{service.name === 'qbittorrent' || service.name === 'seerr' ? 'Connection details are shown above.' : 'No health issues reported.'}</p>
             {:else}
               <div class="rad-list">
                 {#each data.health as item, index (item.source + '-' + index)}

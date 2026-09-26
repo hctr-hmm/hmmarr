@@ -9,7 +9,8 @@
     { name: 'sonarr', label: 'Sonarr', route: 'series' },
     { name: 'bazarr', label: 'Bazarr', route: 'bazarr' },
     { name: 'prowlarr', label: 'Prowlarr', route: 'prowlarr' },
-    { name: 'qbittorrent', label: 'qBittorrent', route: 'qbittorrent' }
+    { name: 'qbittorrent', label: 'qBittorrent', route: 'qbittorrent' },
+    { name: 'seerr', label: 'Seerr', route: 'seerr' }
   ];
 
   let health = $derived($serviceHealth);
@@ -80,6 +81,9 @@
       torrents: ['/api/qbittorrent/torrents/info'],
       transfer: ['/api/qbittorrent/transfer/info']
     };
+    if (name === 'seerr') return {
+      counts: ['/api/v1/request/count']
+    };
     return {
       indexers: ['/api/v1/indexer'],
       failing: ['/api/v1/indexerstatus'],
@@ -89,7 +93,7 @@
 
   function summarize(name, data, partial) {
     const healthResponse = data.health?.data ?? data.health;
-    const issues = name === 'qbittorrent' ? [] : Array.isArray(healthResponse) ? [...healthResponse] : [{ type: 'warning', message: 'Health information could not be loaded.' }];
+    const issues = name === 'qbittorrent' || name === 'seerr' ? [] : Array.isArray(healthResponse) ? [...healthResponse] : [{ type: 'warning', message: 'Health information could not be loaded.' }];
     const providerList = data.providers?.data;
     if (name === 'bazarr' && Array.isArray(providerList)) {
       for (const provider of providerList.filter((item) => item.status !== 'Good')) {
@@ -142,6 +146,13 @@
         { label: 'Torrents', value: torrents?.length ?? null, route: 'qbittorrent' },
         { label: 'Downloading', value: torrents?.filter((item) => item.progress < 1 && !/paused|stopped/i.test(item.state || '')).length ?? null, route: 'qbittorrent' },
         { label: 'Completed', value: torrents?.filter((item) => item.progress >= 1).length ?? null, route: 'qbittorrent' }
+      );
+    } else if (name === 'seerr') {
+      const counts = data.counts;
+      metrics.push(
+        { label: 'Requests', value: count(counts?.total), route: 'seerr', section: { tab: 'requests', filter: 'all' } },
+        { label: 'Pending', value: count(counts?.pending), route: 'seerr', section: { tab: 'requests', filter: 'pending' } },
+        { label: 'Approved', value: count(counts?.approved), route: 'seerr', section: { tab: 'requests', filter: 'approved' } }
       );
     } else {
       const indexers = Array.isArray(data.indexers) ? data.indexers : null;

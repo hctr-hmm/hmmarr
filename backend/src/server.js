@@ -8,7 +8,7 @@ import { join, extname } from 'node:path';
 import { loadConfig } from './config.js';
 import { clearSessionCookie, createSessionCookie, hashPassword, readSessionCookie, verifyPassword } from './auth.js';
 import { getPool, migrate, findUserByUsername, findUserById, createUser, listUsers, updateUserPassword, deleteUser, userCount } from './db.js';
-import { probeService, proxyRequest } from './proxy.js';
+import { buildTarget, probeService, proxyRequest } from './proxy.js';
 import { createPosterHandler } from './posters.js';
 import { createQbittorrentClient } from './qbittorrent.js';
 
@@ -146,7 +146,7 @@ export function createAppServer(config, pool) {
       if (request.method === 'GET' && pathname === '/api/services')
         return sendJson(response, 200, Object.values(config.services).map(publicService));
 
-      const statusMatch = pathname.match(/^\/api\/services\/(radarr|sonarr|bazarr|prowlarr|qbittorrent)\/status$/);
+      const statusMatch = pathname.match(/^\/api\/services\/(radarr|sonarr|bazarr|prowlarr|qbittorrent|seerr)\/status$/);
       if (request.method === 'GET' && statusMatch) {
         const service = config.services[statusMatch[1]];
         if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
@@ -218,12 +218,38 @@ export function createAppServer(config, pool) {
         return sendJson(response, 200, { deleted: true });
       }
 
+      if (request.method === 'POST' && pathname === '/api/seerr/request') {
+        const service = config.services.seerr;
+        if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
+        const body = await readJson(request);
+        if (!['movie', 'tv'].includes(body.mediaType) || !Number.isSafeInteger(body.mediaId) || body.mediaId < 1)
+          return sendJson(response, 400, { error: 'invalid_media_request', requestId });
+        if (body.mediaType === 'tv' && body.seasons !== 'all' && (!Array.isArray(body.seasons) || !body.seasons.length || !body.seasons.every((season) => Number.isSafeInteger(season) && season >= 0)))
+          return sendJson(response, 400, { error: 'invalid_seasons', requestId });
+        const payload = { mediaType: body.mediaType, mediaId: body.mediaId };
+        if (body.mediaType === 'tv') payload.seasons = body.seasons;
+        try {
+          const upstream = await fetch(buildTarget(service, '/api/v1/request'), { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': service.apiKey }, body: JSON.stringify(payload), redirect: 'manual', signal: AbortSignal.timeout(config.requestTimeoutMs) });
+          const result = await upstream.json().catch(() => ({}));
+          return sendJson(response, upstream.status, result);
+        } catch (cause) {
+          return sendJson(response, cause.name === 'TimeoutError' ? 504 : 502, { error: cause.name === 'TimeoutError' ? 'upstream_timeout' : 'upstream_unavailable', requestId });
+        }
+      }
+
       // ── Proxy ─────────────────────────────────────────────────────────────────
       const rawPathname = (request.url || '/').split('?')[0];
-      const proxyMatch = rawPathname.match(/^\/api\/proxy\/(radarr|sonarr|bazarr|prowlarr)(\/.*)$/);
+      const proxyMatch = rawPathname.match(/^\/api\/proxy\/(radarr|sonarr|bazarr|prowlarr|seerr)(\/.*)$/);
       if (proxyMatch) {
         const service = config.services[proxyMatch[1]];
         if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
+        if (service.name === 'seerr') {
+          const path = proxyMatch[2];
+          const readable = /^\/api\/v1\/(status|request(?:\/count|\/[1-9]\d*)?|search|discover\/(?:trending|movies|tv)(?:\/upcoming)?|movie\/[1-9]\d*|tv\/[1-9]\d*)$/.test(path);
+          const manageable = /^\/api\/v1\/request\/[1-9]\d*(?:\/(?:approve|decline|retry))?$/.test(path);
+          if (request.method === 'GET' ? !readable : !currentUser.is_admin || !manageable || !['POST', 'DELETE'].includes(request.method))
+            return sendJson(response, 403, { error: 'seerr_action_not_allowed', requestId });
+        }
         return proxyRequest({ request, response, service, rawPath: proxyMatch[2], search: parsed.search, timeoutMs: config.requestTimeoutMs, requestId });
       }
 

@@ -29,7 +29,7 @@ before(async () => {
     response.end(JSON.stringify({ version: '1.2.3', received }));
   });
   const upstreamPort = await listen(upstream);
-  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret', BAZARR_URL: `http://127.0.0.1:${upstreamPort}`, BAZARR_API_KEY: 'bazarr-secret', PROWLARR_URL: `http://127.0.0.1:${upstreamPort}`, PROWLARR_API_KEY: 'prowlarr-secret' });
+  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret', BAZARR_URL: `http://127.0.0.1:${upstreamPort}`, BAZARR_API_KEY: 'bazarr-secret', PROWLARR_URL: `http://127.0.0.1:${upstreamPort}`, PROWLARR_API_KEY: 'prowlarr-secret', SEERR_URL: `http://127.0.0.1:${upstreamPort}`, SEERR_API_KEY: 'seerr-secret' });
   const user = { id: 1, username, password_hash: await hashPassword(password), is_admin: true, session_version: 1, created_at: new Date().toISOString() };
   const users = new Map([[username, user]]);
   let nextId = 2;
@@ -81,7 +81,7 @@ test('login creates a usable HttpOnly session', async () => {
   cookie = login.headers.get('set-cookie');
   assert.match(cookie, /HttpOnly/);
   const services = await fetch(`${baseUrl}/api/services`, { headers: { cookie } });
-  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }, { name: 'bazarr', label: 'Bazarr', apiVersion: 'v1', configured: true }, { name: 'prowlarr', label: 'Prowlarr', apiVersion: 'v1', configured: true }]);
+  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }, { name: 'bazarr', label: 'Bazarr', apiVersion: 'v1', configured: true }, { name: 'prowlarr', label: 'Prowlarr', apiVersion: 'v1', configured: true }, { name: 'seerr', label: 'Seerr', apiVersion: 'v1', configured: true }]);
 });
 
 test('member accounts have separate sessions, can change passwords, and cannot manage users', async () => {
@@ -112,6 +112,12 @@ test('member accounts have separate sessions, can change passwords, and cannot m
   assert.equal((await request('/api/admin/users', 'GET', memberCookie)).status, 403);
   assert.equal((await request('/api/admin/users', 'POST', memberCookie, { username: 'intruder', password: memberPassword })).status, 403);
   assert.equal((await request(`/api/admin/users/${memberName}`, 'DELETE', memberCookie)).status, 403);
+  assert.equal((await request('/api/proxy/seerr/api/v1/settings/main', 'GET', memberCookie)).status, 403);
+  assert.equal((await request('/api/proxy/seerr/api/v1/request/1/approve', 'POST', memberCookie)).status, 403);
+  const submitted = await request('/api/seerr/request', 'POST', memberCookie, { mediaType: 'movie', mediaId: 123, userId: 99 });
+  assert.equal(submitted.status, 200);
+  assert.equal((await submitted.json()).received.body, JSON.stringify({ mediaType: 'movie', mediaId: 123 }));
+  assert.equal((await request('/api/seerr/request', 'POST', memberCookie, { mediaType: 'movie', mediaId: -1 })).status, 400);
 
   const changedPassword = 'member-new-password-456';
   assert.equal((await request('/api/auth/password', 'POST', memberCookie, { currentPassword: 'wrong-password', newPassword: changedPassword })).status, 403);
@@ -183,6 +189,17 @@ test('Prowlarr proxy forwards searches, grabs, and indexer updates', async () =>
   const indexer = { id: 2, name: 'Example', enable: false };
   const update = await fetch(`${baseUrl}/api/proxy/prowlarr/api/v1/indexer/2`, { method: 'PUT', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(indexer) });
   assert.equal((await update.json()).received.body, JSON.stringify(indexer));
+});
+
+test('Seerr proxy forwards safe reads and admin request actions without exposing its key', async () => {
+  const search = await fetch(`${baseUrl}/api/proxy/seerr/api/v1/search?query=Example&page=2`, { headers: { cookie } });
+  const searchResult = (await search.json()).received;
+  assert.equal(searchResult.apiKey, 'seerr-secret');
+  assert.equal(searchResult.url, '/api/v1/search?query=Example&page=2');
+  const approve = await fetch(`${baseUrl}/api/proxy/seerr/api/v1/request/1/approve`, { method: 'POST', headers: { cookie } });
+  assert.equal(approve.status, 200);
+  assert.equal((await approve.json()).received.method, 'POST');
+  assert.equal((await fetch(`${baseUrl}/api/proxy/seerr/api/v1/settings/main`, { headers: { cookie } })).status, 403);
 });
 
 test('proxy streams poster images and bulk DELETE requests', async () => {

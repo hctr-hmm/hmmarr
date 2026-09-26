@@ -3,6 +3,7 @@ const SERVICE_DEFINITIONS = Object.freeze({
   sonarr:   { label: 'Sonarr',   apiVersion: 'v3', statusPath: '/api/v3/system/status', keyHeader: 'X-Api-Key' },
   bazarr:   { label: 'Bazarr',   apiVersion: 'v1', statusPath: '/api/system/status',    keyHeader: 'X-API-KEY' },
   prowlarr: { label: 'Prowlarr', apiVersion: 'v1', statusPath: '/api/v1/system/status', keyHeader: 'X-Api-Key' },
+  seerr:    { label: 'Seerr',    apiVersion: 'v1', statusPath: '/api/v1/status', keyHeader: 'X-Api-Key' },
 });
 
 function parseInteger(value, fallback, name, minimum, maximum) {
