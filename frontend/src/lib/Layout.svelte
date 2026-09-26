@@ -289,15 +289,26 @@
     }
   }
 
-  .shell { background: var(--bg); }
+  .shell {
+    background:
+      radial-gradient(ellipse 280px 420px at 30px 15%, #34525c 0%, transparent 70%),
+      radial-gradient(ellipse 260px 380px at 15px 90%, #574334 0%, transparent 72%),
+      var(--bg);
+  }
   .sidebar {
     width: 228px;
     padding: 20px 10px 12px;
-    background: var(--surface);
-    border-right-color: var(--border);
+    background:
+      radial-gradient(ellipse 170px 105px at 14% 0%, #ffffff27, transparent 85%),
+      linear-gradient(135deg, #ffffff0d 0%, #ffffff02 42%, #0000001a 100%),
+      #202931bd;
+    border-right-color: #ffffff2b;
+    box-shadow: inset 1px 0 #ffffff18, inset -1px 0 #00000035, 10px 0 28px #00000030;
+    -webkit-backdrop-filter: blur(26px) saturate(145%);
+    backdrop-filter: blur(26px) saturate(145%);
     z-index: 31;
   }
-  .brand { display: grid; padding: 0 10px 19px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .brand { display: grid; padding: 0 10px 19px; margin-bottom: 8px; border-bottom: 1px solid #ffffff24; }
   .brand img { max-width: 144px; }
   .sidebar-nav { padding: 0 3px; scrollbar-color: var(--border-subtle) transparent; }
   .nav-group { margin: 0 0 9px; }
@@ -311,14 +322,14 @@
     text-transform: none;
   }
   .nav-list { gap: 2px; }
-  .nav-item { position: relative; min-height: 36px; padding: 7px 11px; color: var(--text-muted); font-size: 13px; border-radius: var(--radius-md); }
-  .nav-item:hover { background: var(--surface-2); color: var(--text); }
-  .nav-item.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
+  .nav-item { position: relative; min-height: 36px; padding: 6px 10px; border: 1px solid transparent; color: #c8d0d3; font-size: 13px; border-radius: 11px; transition: color var(--trans), background var(--trans), border-color var(--trans), box-shadow var(--trans); }
+  .nav-item:hover { border-color: #ffffff17; background: #ffffff11; color: var(--text); }
+  .nav-item.active { border-color: #ffffff3c; background: linear-gradient(180deg, #ffffff26, #ffffff12); box-shadow: inset 0 1px #ffffff2e, 0 3px 10px #00000028; color: #fff; font-weight: 600; }
   .nav-item.active::before { content: none; }
   .nav-item.active .icon { color: var(--accent); }
   .icon svg { width: 17px; height: 17px; }
-  .nav-utility { padding: 2px 3px 0; border-top-color: var(--border); }
-  .sidebar-footer { display: grid; gap: 4px; margin: 10px 3px 0; padding-top: 10px; border-top: 1px solid var(--border); }
+  .nav-utility { padding: 2px 3px 0; border-top-color: #ffffff22; }
+  .sidebar-footer { display: grid; gap: 4px; margin: 10px 3px 0; padding-top: 10px; border-top: 1px solid #ffffff22; }
   .signed-in { display: block; padding: 5px 8px; color: var(--text-faint); font-size: 12px; }
   .logout-btn { min-height: 34px; padding: 7px 8px; font-size: 12px; }
   .content {
@@ -327,6 +338,13 @@
   }
   .mobile-header, .menu-backdrop { display: none; }
 
+  @supports not (backdrop-filter: blur(1px)) {
+    .sidebar { background: #202931; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .sidebar { background: #202931; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+
   @media (max-width: 720px) {
     .shell { display: block; }
     .mobile-header { position: sticky; top: 0; z-index: 25; display: flex; align-items: center; gap: 13px; height: 62px; padding: 0 16px; border-bottom: 1px solid var(--border); background: #171b21; }
@@ -334,7 +352,7 @@
     .mobile-current { min-width: 0; margin-left: auto; color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .menu-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); }
     .menu-button svg { width: 19px; height: 19px; }
-    .menu-backdrop { display: block; position: fixed; inset: 0; z-index: 29; width: 100%; border: 0; background: #05080cc9; }
+    .menu-backdrop { display: block; position: fixed; inset: 0; z-index: 29; width: 100%; border: 0; background: #05080c99; }
     .sidebar { display: flex; position: fixed; top: 0; bottom: 0; left: 0; width: min(290px, 84vw); height: 100dvh; visibility: hidden; transform: translateX(-105%); transition: transform 220ms var(--ease-out), visibility 220ms; box-shadow: 16px 0 48px #0008; }
     .sidebar.open { visibility: visible; transform: translateX(0); }
     .content { padding: 25px 16px 48px; min-height: calc(100dvh - 62px); }
