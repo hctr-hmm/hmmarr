@@ -60,7 +60,7 @@
 {#if !$authStatus.checked}
   <!-- Splash while checking auth -->
   <div class="splash">
-    <span class="wordmark">hmmarr</span>
+    <img src="/hmmarr-logo.svg" alt="hmmarr" width="220" height="56" />
   </div>
 {:else if $route === 'login'}
   <Login />
@@ -137,10 +137,5 @@
     min-height: 100dvh;
     gap: var(--space-4);
   }
-  .wordmark {
-    font-size: var(--text-xl);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--accent);
-  }
+  .splash img { display: block; width: min(220px, 80vw); height: auto; }
 </style>

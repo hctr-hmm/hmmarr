@@ -41,13 +41,7 @@
 <div class="shell">
   <aside class="sidebar">
     <div class="brand">
-      <svg width="24" height="24" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-        <rect x="4" y="6" width="4" height="24" rx="1.5" fill="#e6b450"/>
-        <rect x="28" y="6" width="4" height="24" rx="1.5" fill="#e6b450"/>
-        <rect x="4" y="16" width="28" height="4" rx="1.5" fill="#e6b450"/>
-        <rect x="14" y="6" width="3" height="10" rx="1" fill="#39bae6" opacity="0.7"/>
-      </svg>
-      <span class="wordmark">hmmarr</span>
+      <img src="/hmmarr-logo.svg" alt="hmmarr" width="180" height="46" />
     </div>
 
     <nav aria-label="Main navigation">
@@ -168,12 +162,7 @@
     border-bottom: 1px solid var(--border);
     margin-bottom: var(--space-4);
   }
-  .wordmark {
-    font-size: var(--text-lg);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    color: var(--text);
-  }
+  .brand img { display: block; width: 100%; max-width: 180px; height: auto; }
 
   .nav-list {
     list-style: none;

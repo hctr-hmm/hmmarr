@@ -17,7 +17,7 @@ const MIME_TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascrip
 
 async function serveStatic(request, response, pathname) {
   if (!['GET', 'HEAD'].includes(request.method)) return false;
-  const file = pathname === '/' ? 'index.html' : pathname === '/favicon.svg' ? 'favicon.svg' : /^\/assets\/[a-zA-Z0-9._-]+$/.test(pathname) ? pathname.slice(1) : null;
+  const file = pathname === '/' ? 'index.html' : ['/favicon.svg', '/hmmarr-logo.svg'].includes(pathname) ? pathname.slice(1) : /^\/assets\/[a-zA-Z0-9._-]+$/.test(pathname) ? pathname.slice(1) : null;
   if (!file) return false;
   const fullPath = join(STATIC_DIR, file);
   let info;
@@ -26,7 +26,7 @@ async function serveStatic(request, response, pathname) {
   response.writeHead(200, {
     'content-type': MIME_TYPES[extname(file)] || 'application/octet-stream',
     'content-length': info.size,
-    'cache-control': file === 'index.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+    'cache-control': file.startsWith('assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
     'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://image.tmdb.org https://artworks.thetvdb.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
   });
   if (request.method === 'HEAD') response.end();

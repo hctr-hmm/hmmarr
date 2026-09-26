@@ -29,15 +29,8 @@
 
 <div class="page">
   <div class="card">
-    <!-- Logo -->
     <div class="brand">
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-        <rect x="4"  y="6"  width="4" height="24" rx="1.5" fill="#e6b450"/>
-        <rect x="28" y="6"  width="4" height="24" rx="1.5" fill="#e6b450"/>
-        <rect x="4"  y="16" width="28" height="4" rx="1.5" fill="#e6b450"/>
-        <rect x="14" y="6"  width="3" height="10" rx="1"   fill="#39bae6" opacity="0.7"/>
-      </svg>
-      <span class="wordmark">hmmarr</span>
+      <img src="/hmmarr-logo.svg" alt="hmmarr" width="220" height="56" />
     </div>
 
     <h1 class="title">Sign in</h1>
@@ -137,8 +130,7 @@
       0 2px 8px oklch(0 0 0 / 0.3);
   }
 
-  .brand { display: flex; align-items: center; gap: var(--space-3); }
-  .wordmark { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+  .brand img { display: block; width: min(220px, 100%); height: auto; }
 
   .title    { font-size: var(--text-lg); font-weight: 600; color: var(--text); letter-spacing: -0.01em; margin-top: calc(-1 * var(--space-2)); }
   .subtitle { font-size: var(--text-sm); color: var(--text-muted); margin-top: calc(-1 * var(--space-3)); }

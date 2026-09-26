@@ -149,6 +149,13 @@ test('built frontend is served with its assets', async () => {
   const script = html.match(/src="(\/assets\/[^\"]+\.js)"/);
   assert.ok(script);
   assert.equal((await fetch(`${baseUrl}${script[1]}`)).status, 200);
+  for (const asset of ['/favicon.svg', '/hmmarr-logo.svg']) {
+    const response = await fetch(`${baseUrl}${asset}`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'image/svg+xml');
+    assert.equal(response.headers.get('cache-control'), 'no-cache');
+    assert.match(await response.text(), /<svg/);
+  }
 });
 
 test('configuration requires database and session secret, but permits missing optional service keys', () => {
