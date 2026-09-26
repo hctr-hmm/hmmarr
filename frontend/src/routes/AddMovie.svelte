@@ -118,7 +118,7 @@
       <div class="results">
         {#each results as movie (movie.tmdbId)}
           <div class="result">
-            {#if posterUrl(movie)}<img src={posterUrl(movie)} alt="" loading="lazy" />{:else}<span class="placeholder">{movie.title?.slice(0, 1)}</span>{/if}
+            {#if posterUrl(movie)}<img src={posterUrl(movie, 'small')} alt="" loading="lazy" />{:else}<span class="placeholder">{movie.title?.slice(0, 1)}</span>{/if}
             <div class="rad-row-main"><strong class="rad-row-title">{movie.title} ({movie.year || '—'})</strong><span class="rad-row-meta">{movie.overview || 'No overview available.'}</span></div>
             {#if existingIds.has(movie.tmdbId) || movie.id > 0}<span class="rad-badge good">In library</span>{:else}<button class="rad-button" onclick={() => choose(movie)}>Select</button>{/if}
           </div>

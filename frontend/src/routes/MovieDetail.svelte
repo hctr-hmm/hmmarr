@@ -133,7 +133,7 @@
     </div>
     {#if tab === 'details'}
       <div class="hero">
-        {#if posterUrl(current)}<img src={posterUrl(current)} alt={`${current.title} poster`} />{/if}
+        {#if posterUrl(current)}<img src={posterUrl(current, 'full')} alt={`${current.title} poster`} />{/if}
         <div class="hero-text"><p>{current.overview || 'No overview available.'}</p><div class="rad-actions"><span class="rad-badge" class:good={current.hasFile} class:warn={!current.hasFile}>{current.hasFile ? 'Downloaded' : current.isAvailable ? 'Missing' : current.status}</span><span class="rad-badge">{current.runtime || 0} min</span><span class="rad-badge">{formatBytes(current.sizeOnDisk)}</span></div><p class="rad-muted">Released: {formatDate(current.digitalRelease || current.physicalRelease || current.inCinemas)}</p></div>
       </div>
       <div class="rad-fields">
