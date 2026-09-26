@@ -23,7 +23,7 @@ export function createPosterHandler() {
   }
 
   return async function servePoster(response, service, movieId, version, timeoutMs) {
-    const key = `${movieId}:${version}`;
+    const key = `${service.name}:${movieId}:${version}`;
     let image = cache.get(key);
     if (image) {
       cache.delete(key);

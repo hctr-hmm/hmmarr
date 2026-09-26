@@ -27,7 +27,7 @@ async function serveStatic(request, response, pathname) {
     'content-type': MIME_TYPES[extname(file)] || 'application/octet-stream',
     'content-length': info.size,
     'cache-control': file === 'index.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
-    'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://image.tmdb.org; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+    'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://image.tmdb.org https://artworks.thetvdb.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
   });
   if (request.method === 'HEAD') response.end();
   else createReadStream(fullPath).pipe(response);
@@ -102,14 +102,14 @@ export function createAppServer(config, pool) {
       if (!isAuthenticated(request, config))
         return sendJson(response, 401, { error: 'authentication_required', requestId });
 
-      const posterMatch = pathname.match(/^\/api\/posters\/radarr\/([1-9]\d*)\.jpg$/);
+      const posterMatch = pathname.match(/^\/api\/posters\/(radarr|sonarr)\/([1-9]\d*)\.jpg$/);
       if (request.method === 'GET' && posterMatch) {
-        const service = config.services.radarr;
+        const service = config.services[posterMatch[1]];
         if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
         const version = parsed.searchParams.get('lastWrite') || '';
         if (version.length > 64) return sendJson(response, 400, { error: 'invalid_poster_version', requestId });
         try {
-          return await servePoster(response, service, posterMatch[1], version, config.requestTimeoutMs);
+          return await servePoster(response, service, posterMatch[2], version, config.requestTimeoutMs);
         } catch (error) {
           const status = error.message === 'poster_not_found' ? 404 : error.name === 'TimeoutError' ? 504 : 502;
           return sendJson(response, status, { error: status === 404 ? 'poster_not_found' : 'poster_unavailable', requestId });

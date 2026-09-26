@@ -1,6 +1,6 @@
 # Hmmarr
 
-A single web interface for Radarr, Sonarr, Bazarr, and Prowlarr. The current interface includes sign-in, a service dashboard, and Radarr movie management: library, search and add, Discover, movie details, bulk editing, wanted lists, collections, download queue, release calendar, history, blocklist, and system health. Series, indexers, and subtitles are still placeholder pages.
+A single web interface for Radarr, Sonarr, Bazarr, and Prowlarr. The interface includes sign-in, a service dashboard, and Radarr movie management: library, search and add, Discover, movie details, bulk editing, wanted lists, collections, download queue, release calendar, history, blocklist, and system health. Sonarr's Series section includes a library, search and add, series settings, season and episode monitoring, searches, manual releases, missing episodes, queue, calendar, and history. Indexers and subtitles are still placeholder pages.
 
 ## Run with Docker Compose
 

@@ -15,6 +15,7 @@
   import Discover from './routes/Discover.svelte';
   import Blocklist from './routes/Blocklist.svelte';
   import System from './routes/System.svelte';
+  import Series from './routes/Series.svelte';
 
   const ROUTES = {
     dashboard: { component: Dashboard, title: '' },
@@ -22,7 +23,7 @@
     wanted:    { component: Wanted, title: '' },
     collections: { component: Collections, title: '' },
     discover:  { component: Discover, title: '' },
-    series:    { component: ComingSoon, title: 'Series' },
+    series:    { component: Series, title: '' },
     queue:     { component: Queue, title: '' },
     calendar:  { component: Calendar, title: '' },
     history:   { component: History, title: '' },

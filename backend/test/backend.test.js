@@ -17,7 +17,7 @@ before(async () => {
   sourcePoster = await sharp({ create: { width: 1200, height: 1800, channels: 3, background: '#456789' } }).jpeg().toBuffer();
   upstream = http.createServer(async (request, response) => {
     if (request.url.startsWith('/api/v3/mediacover/')) {
-      assert.equal(request.headers['x-api-key'], 'radarr-secret');
+      assert.ok(['radarr-secret', 'sonarr-secret'].includes(request.headers['x-api-key']));
       response.setHeader('content-type', 'image/jpeg');
       response.end(sourcePoster);
       return;
@@ -29,7 +29,7 @@ before(async () => {
     response.end(JSON.stringify({ version: '1.2.3', received }));
   });
   const upstreamPort = await listen(upstream);
-  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret' });
+  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret' });
   const user = { id: 1, username, password_hash: await hashPassword(password) };
   const pool = { query: async (sql, params) => {
     if (sql.startsWith('SELECT id, username, password_hash')) return { rows: params[0] === username ? [user] : [] };
@@ -58,7 +58,7 @@ test('login creates a usable HttpOnly session', async () => {
   cookie = login.headers.get('set-cookie');
   assert.match(cookie, /HttpOnly/);
   const services = await fetch(`${baseUrl}/api/services`, { headers: { cookie } });
-  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }]);
+  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }]);
 });
 
 test('proxy injects API key, strips supplied key, and forwards query', async () => {
@@ -96,6 +96,11 @@ test('poster endpoint delivers an authenticated 1000 by 1500 JPEG', async () => 
   const metadata = await sharp(Buffer.from(await poster.arrayBuffer())).metadata();
   assert.equal(metadata.width, 1000);
   assert.equal(metadata.height, 1500);
+  const sonarr = await fetch(`${baseUrl}/api/posters/sonarr/1.jpg?lastWrite=456`, { headers: { cookie } });
+  assert.equal(sonarr.status, 200);
+  const seriesMetadata = await sharp(Buffer.from(await sonarr.arrayBuffer())).metadata();
+  assert.equal(seriesMetadata.width, 1000);
+  assert.equal(seriesMetadata.height, 1500);
 });
 
 test('built frontend is served with its assets', async () => {
