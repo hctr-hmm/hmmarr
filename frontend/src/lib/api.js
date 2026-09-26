@@ -5,12 +5,13 @@
 
 const BASE = '';
 
-async function request(method, path, body) {
+async function request(method, path, body, signal) {
   /** @type {RequestInit} */
   const opts = {
     method,
     credentials: 'same-origin',
-    headers: { Accept: 'application/json' }
+    headers: { Accept: 'application/json' },
+    signal
   };
   if (body !== undefined) {
     opts.headers['Content-Type'] = 'application/json';
@@ -49,7 +50,7 @@ export const api = {
 
   // Proxy helpers
   proxy: {
-    get:    (service, path, params) => { const qs = params ? '?' + new URLSearchParams(params).toString() : ''; return api.get(`/api/proxy/${service}${path}${qs}`); },
+    get:    (service, path, params, signal) => { const qs = params ? '?' + new URLSearchParams(params).toString() : ''; return request('GET', `/api/proxy/${service}${path}${qs}`, undefined, signal); },
     post:   (service, path, body, params) => { const qs = params ? '?' + new URLSearchParams(params).toString() : ''; return api.post(`/api/proxy/${service}${path}${qs}`, body); },
     put:    (service, path, body, params) => { const qs = params ? '?' + new URLSearchParams(params).toString() : ''; return api.put(`/api/proxy/${service}${path}${qs}`, body); },
     patch:  (service, path, params, body) => { const qs = params ? '?' + new URLSearchParams(params).toString() : ''; return api.patch(`/api/proxy/${service}${path}${qs}`, body); },

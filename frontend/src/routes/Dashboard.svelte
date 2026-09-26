@@ -145,12 +145,18 @@
 
   async function loadDetails(name) {
     const entries = Object.entries(queries(name));
-    const results = await Promise.allSettled(entries.map(([, [path, params]]) => api.proxy.get(name, path, params)));
-    const data = {};
-    entries.forEach(([key], index) => {
-      data[key] = results[index].status === 'fulfilled' ? results[index].value : null;
-    });
-    return summarize(name, data, results.some((result) => result.status === 'rejected'));
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const results = await Promise.allSettled(entries.map(([, [path, params]]) => api.proxy.get(name, path, params, controller.signal)));
+      const data = {};
+      entries.forEach(([key], index) => {
+        data[key] = results[index].status === 'fulfilled' ? results[index].value : null;
+      });
+      return summarize(name, data, results.some((result) => result.status === 'rejected'));
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async function refresh() {
@@ -171,7 +177,8 @@
           const status = await api.serviceStatus(name);
           serviceHealth.update((state) => ({ ...state, [name]: { ...status, loading: false, unconfigured: false } }));
           if (status.online) {
-            details = { ...details, [name]: await loadDetails(name) };
+            const serviceDetails = await loadDetails(name);
+            details = { ...details, [name]: serviceDetails };
           } else {
             details = { ...details, [name]: null };
           }
