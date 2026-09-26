@@ -29,7 +29,7 @@ before(async () => {
     response.end(JSON.stringify({ version: '1.2.3', received }));
   });
   const upstreamPort = await listen(upstream);
-  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret', BAZARR_URL: `http://127.0.0.1:${upstreamPort}`, BAZARR_API_KEY: 'bazarr-secret' });
+  const config = loadConfig({ DATABASE_URL: 'postgres://localhost/hmmarr', HMMARR_SESSION_SECRET: 'test-session-secret-at-least-32-characters', RADARR_URL: `http://127.0.0.1:${upstreamPort}`, RADARR_API_KEY: 'radarr-secret', SONARR_URL: `http://127.0.0.1:${upstreamPort}`, SONARR_API_KEY: 'sonarr-secret', BAZARR_URL: `http://127.0.0.1:${upstreamPort}`, BAZARR_API_KEY: 'bazarr-secret', PROWLARR_URL: `http://127.0.0.1:${upstreamPort}`, PROWLARR_API_KEY: 'prowlarr-secret' });
   const user = { id: 1, username, password_hash: await hashPassword(password) };
   const pool = { query: async (sql, params) => {
     if (sql.startsWith('SELECT id, username, password_hash')) return { rows: params[0] === username ? [user] : [] };
@@ -58,7 +58,7 @@ test('login creates a usable HttpOnly session', async () => {
   cookie = login.headers.get('set-cookie');
   assert.match(cookie, /HttpOnly/);
   const services = await fetch(`${baseUrl}/api/services`, { headers: { cookie } });
-  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }, { name: 'bazarr', label: 'Bazarr', apiVersion: 'v1', configured: true }]);
+  assert.deepEqual(await services.json(), [{ name: 'radarr', label: 'Radarr', apiVersion: 'v3', configured: true }, { name: 'sonarr', label: 'Sonarr', apiVersion: 'v3', configured: true }, { name: 'bazarr', label: 'Bazarr', apiVersion: 'v1', configured: true }, { name: 'prowlarr', label: 'Prowlarr', apiVersion: 'v1', configured: true }]);
 });
 
 test('proxy injects API key, strips supplied key, and forwards query', async () => {
@@ -95,6 +95,21 @@ test('Bazarr proxy forwards query actions and subtitle uploads', async () => {
   assert.match(uploadResult.contentType, /multipart\/form-data/);
   assert.match(uploadResult.body, /subtitle\.srt/);
   assert.match(uploadResult.body, /Hello/);
+});
+
+test('Prowlarr proxy forwards searches, grabs, and indexer updates', async () => {
+  const search = await fetch(`${baseUrl}/api/proxy/prowlarr/api/v1/search?query=Example&type=search&indexerIds=2`, { headers: { cookie } });
+  const searchResult = (await search.json()).received;
+  assert.equal(searchResult.url, '/api/v1/search?query=Example&type=search&indexerIds=2');
+  assert.equal(searchResult.apiKey, 'prowlarr-secret');
+
+  const release = { guid: 'release-guid', title: 'Example release', indexerId: 2 };
+  const grab = await fetch(`${baseUrl}/api/proxy/prowlarr/api/v1/search`, { method: 'POST', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(release) });
+  assert.equal((await grab.json()).received.body, JSON.stringify(release));
+
+  const indexer = { id: 2, name: 'Example', enable: false };
+  const update = await fetch(`${baseUrl}/api/proxy/prowlarr/api/v1/indexer/2`, { method: 'PUT', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(indexer) });
+  assert.equal((await update.json()).received.body, JSON.stringify(indexer));
 });
 
 test('proxy streams poster images and bulk DELETE requests', async () => {

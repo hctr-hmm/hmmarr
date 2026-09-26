@@ -3,7 +3,6 @@
   import { route, authStatus, navigate } from './lib/stores.js';
   import { api } from './lib/api.js';
   import Layout from './lib/Layout.svelte';
-  import ComingSoon from './lib/ComingSoon.svelte';
   import Login from './routes/Login.svelte';
   import Dashboard from './routes/Dashboard.svelte';
   import Movies from './routes/Movies.svelte';
@@ -17,6 +16,7 @@
   import System from './routes/System.svelte';
   import Series from './routes/Series.svelte';
   import Subtitles from './routes/Subtitles.svelte';
+  import Indexers from './routes/Indexers.svelte';
 
   const ROUTES = {
     dashboard: { component: Dashboard, title: '' },
@@ -30,7 +30,7 @@
     history:   { component: History, title: '' },
     blocklist: { component: Blocklist, title: '' },
     system:    { component: System, title: '' },
-    prowlarr:  { component: ComingSoon, title: 'Indexers' },
+    prowlarr:  { component: Indexers, title: '' },
     bazarr:    { component: Subtitles, title: '' },
   };
 
