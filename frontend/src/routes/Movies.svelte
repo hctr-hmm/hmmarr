@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { api } from '../lib/api.js';
-  import { posterUrl, posterSrcSet } from '../lib/radarr.js';
+  import { posterUrl } from '../lib/radarr.js';
   import AddMovie from './AddMovie.svelte';
   import MovieDetail from './MovieDetail.svelte';
   import BulkEdit from './BulkEdit.svelte';
@@ -219,7 +219,7 @@
           {#if selectionMode}<label class="select-check"><input type="checkbox" checked={selected.has(movie.id)} onchange={() => toggleSelected(movie.id)} aria-label={`Select ${movie.title}`} /></label>{/if}
           <button class="poster-wrap poster-button" onclick={() => selectedMovie = movie} aria-label={`View ${movie.title} details`}>
             {#if posterUrl(movie)}
-              <img class="poster" src={posterUrl(movie)} srcset={posterSrcSet(movie)} sizes="(max-width: 560px) 45vw, (max-width: 900px) 30vw, 190px" alt="{movie.title} poster" loading="lazy" decoding="async" />
+              <img class="poster" src={posterUrl(movie)} alt="{movie.title} poster" loading="lazy" decoding="async" />
             {:else}
               <div class="poster blank">{movie.title.slice(0, 1)}</div>
             {/if}

@@ -4,18 +4,22 @@ import { after, before, test } from 'node:test';
 import { loadConfig } from '../src/config.js';
 import { createAppServer } from '../src/server.js';
 import { hashPassword } from '../src/auth.js';
+import sharp from 'sharp';
 
 const username = 'admin';
 const password = 'correct-horse-battery-staple';
 let upstream, app, baseUrl;
 let cookie;
+let sourcePoster;
 const listen = (server) => new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', () => resolve(server.address().port)); });
 
 before(async () => {
+  sourcePoster = await sharp({ create: { width: 1200, height: 1800, channels: 3, background: '#456789' } }).jpeg().toBuffer();
   upstream = http.createServer(async (request, response) => {
     if (request.url.startsWith('/api/v3/mediacover/')) {
+      assert.equal(request.headers['x-api-key'], 'radarr-secret');
       response.setHeader('content-type', 'image/jpeg');
-      response.end(Buffer.from([0xff, 0xd8, 0xff, 0xd9]));
+      response.end(sourcePoster);
       return;
     }
     const chunks = [];
@@ -45,6 +49,7 @@ test('health endpoint is public', async () => {
 
 test('protected endpoints reject unauthenticated requests', async () => {
   assert.equal((await fetch(`${baseUrl}/api/services`)).status, 401);
+  assert.equal((await fetch(`${baseUrl}/api/posters/radarr/138.jpg`)).status, 401);
 });
 
 test('login creates a usable HttpOnly session', async () => {
@@ -73,7 +78,7 @@ test('proxy streams poster images and bulk DELETE requests', async () => {
   const poster = await fetch(`${baseUrl}/api/proxy/radarr/api/v3/mediacover/138/poster-250.jpg`, { headers: { cookie } });
   assert.equal(poster.status, 200);
   assert.match(poster.headers.get('content-type'), /image\/jpeg/);
-  assert.deepEqual(Buffer.from(await poster.arrayBuffer()), Buffer.from([0xff, 0xd8, 0xff, 0xd9]));
+  assert.deepEqual(Buffer.from(await poster.arrayBuffer()), sourcePoster);
 
   const payload = JSON.stringify({ movieIds: [138], deleteFiles: false });
   const deleted = await fetch(`${baseUrl}/api/proxy/radarr/api/v3/movie/editor`, { method: 'DELETE', headers: { cookie, 'content-type': 'application/json' }, body: payload });
@@ -81,6 +86,16 @@ test('proxy streams poster images and bulk DELETE requests', async () => {
   const result = await deleted.json();
   assert.equal(result.received.method, 'DELETE');
   assert.equal(result.received.body, payload);
+});
+
+test('poster endpoint delivers an authenticated 1000 by 1500 JPEG', async () => {
+  const poster = await fetch(`${baseUrl}/api/posters/radarr/138.jpg?lastWrite=123`, { headers: { cookie } });
+  assert.equal(poster.status, 200);
+  assert.equal(poster.headers.get('content-type'), 'image/jpeg');
+  assert.match(poster.headers.get('cache-control'), /private/);
+  const metadata = await sharp(Buffer.from(await poster.arrayBuffer())).metadata();
+  assert.equal(metadata.width, 1000);
+  assert.equal(metadata.height, 1500);
 });
 
 test('built frontend is served with its assets', async () => {

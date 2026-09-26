@@ -1,19 +1,13 @@
 export const radarrPath = (path) => `/api/proxy/radarr${path}`;
 
-export function posterUrl(movie, size = 'medium') {
+export function posterUrl(movie) {
   const poster = movie?.images?.find((image) => image.coverType === 'poster');
   if (!poster) return null;
   if (movie.id > 0 && poster.url) {
     const version = new URL(poster.url, 'http://radarr.local').searchParams.get('lastWrite');
-    const filename = { small: 'poster-250.jpg', medium: 'poster-500.jpg', full: 'poster.jpg' }[size] || 'poster-500.jpg';
-    return radarrPath(`/api/v3/mediacover/${movie.id}/${filename}${version ? `?lastWrite=${encodeURIComponent(version)}` : ''}`);
+    return `/api/posters/radarr/${movie.id}.jpg${version ? `?lastWrite=${encodeURIComponent(version)}` : ''}`;
   }
   return poster.remoteUrl?.startsWith('https://image.tmdb.org/') ? poster.remoteUrl : null;
-}
-
-export function posterSrcSet(movie) {
-  if (!movie?.id || !movie.images?.some((image) => image.coverType === 'poster' && image.url)) return undefined;
-  return `${posterUrl(movie, 'small')} 250w, ${posterUrl(movie, 'medium')} 500w`;
 }
 
 export function formatBytes(bytes) {

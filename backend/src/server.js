@@ -9,6 +9,7 @@ import { loadConfig } from './config.js';
 import { clearSessionCookie, createSessionCookie, hashPassword, isAuthenticated, verifyPassword } from './auth.js';
 import { getPool, migrate, findUserByUsername, createUser, listUsers, deleteUser, userCount } from './db.js';
 import { probeService, proxyRequest } from './proxy.js';
+import { createPosterHandler } from './posters.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 const STATIC_DIR = fileURLToPath(new URL('../static/', import.meta.url));
@@ -55,6 +56,7 @@ const log = (level, event, fields = {}) =>
   process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), level, event, ...fields })}\n`);
 
 export function createAppServer(config, pool) {
+  const servePoster = createPosterHandler();
   return http.createServer(async (request, response) => {
     const started = performance.now();
     const requestId = request.headers['x-request-id'] || randomUUID();
@@ -99,6 +101,20 @@ export function createAppServer(config, pool) {
       // ── All routes below require authentication ───────────────────────────
       if (!isAuthenticated(request, config))
         return sendJson(response, 401, { error: 'authentication_required', requestId });
+
+      const posterMatch = pathname.match(/^\/api\/posters\/radarr\/([1-9]\d*)\.jpg$/);
+      if (request.method === 'GET' && posterMatch) {
+        const service = config.services.radarr;
+        if (!service) return sendJson(response, 404, { error: 'service_not_configured', requestId });
+        const version = parsed.searchParams.get('lastWrite') || '';
+        if (version.length > 64) return sendJson(response, 400, { error: 'invalid_poster_version', requestId });
+        try {
+          return await servePoster(response, service, posterMatch[1], version, config.requestTimeoutMs);
+        } catch (error) {
+          const status = error.message === 'poster_not_found' ? 404 : error.name === 'TimeoutError' ? 504 : 502;
+          return sendJson(response, status, { error: status === 404 ? 'poster_not_found' : 'poster_unavailable', requestId });
+        }
+      }
 
       // ── Services ───────────────────────────────────────────────────────────────
       if (request.method === 'GET' && pathname === '/api/services')
