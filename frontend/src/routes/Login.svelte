@@ -214,7 +214,7 @@
     width: 100%;
     padding: 13px var(--space-4);
     background: var(--accent);
-    color: #15130e;
+    color: var(--accent-ink);
     font-size: var(--text-sm);
     font-weight: 600;
     border: none;
@@ -222,7 +222,7 @@
     transition: background var(--trans), opacity var(--trans), transform 100ms var(--ease-out);
     letter-spacing: 0.01em;
   }
-  .submit-btn:hover:not(:disabled)  { background: color-mix(in oklch, var(--accent) 85%, white); }
+  .submit-btn:hover:not(:disabled)  { background: var(--accent-hover); }
   .submit-btn:active:not(:disabled) { transform: scale(0.985); }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -230,8 +230,8 @@
   .spinner {
     display: inline-block;
     width: 14px; height: 14px;
-    border: 2px solid color-mix(in oklch, #0d1017 40%, transparent);
-    border-top-color: #0d1017;
+    border: 2px solid color-mix(in oklch, var(--accent-ink) 40%, transparent);
+    border-top-color: var(--accent-ink);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
     flex-shrink: 0;

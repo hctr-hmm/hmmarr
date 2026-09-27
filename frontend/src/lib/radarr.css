@@ -45,25 +45,25 @@
 .rad-actions, .rad-toolbar { gap: 9px; }
 .rad-input, .rad-select, .rad-textarea { min-height: 42px; padding: 9px 12px; border-color: var(--border); background: var(--surface); transition: border-color var(--trans), box-shadow var(--trans); }
 .rad-input:hover, .rad-select:hover, .rad-textarea:hover { border-color: var(--border-subtle); }
-.rad-input:focus, .rad-select:focus, .rad-textarea:focus { box-shadow: 0 0 0 3px #f0bd6226; }
+.rad-input:focus, .rad-select:focus, .rad-textarea:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
 .rad-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 9px 14px; border-color: var(--border); font-weight: 650; transition: background var(--trans), border-color var(--trans), transform var(--trans); }
 .rad-button:hover:not(:disabled) { border-color: var(--border-subtle); background: var(--surface-3); color: var(--text); }
 .rad-button:active:not(:disabled) { transform: translateY(1px); }
-.rad-button.primary { color: #15130e; }
-.rad-button.primary:hover:not(:disabled) { background: #ffd189; border-color: #ffd189; color: #15130e; filter: none; }
-.rad-button.danger:hover:not(:disabled) { background: #ff838b18; }
+.rad-button.primary { color: var(--accent-ink); }
+.rad-button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-ink); filter: none; }
+.rad-button.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--red) 9%, transparent); }
 .rad-panel { min-width: 0; padding: clamp(17px, 2vw, 25px); box-shadow: 0 8px 25px #0000001c; }
 .rad-error, .rad-success { padding: 12px 15px; line-height: 1.5; }
-.rad-error { color: #ffadb3; }
-.rad-success { color: #a9eaa5; }
-.rad-empty { padding: 56px 22px; background: #151b2580; line-height: 1.5; }
+.rad-error { color: var(--red); }
+.rad-success { color: var(--green); }
+.rad-empty { padding: 56px 22px; background: color-mix(in srgb, var(--surface) 50%, transparent); line-height: 1.5; }
 .rad-row { padding: 15px 18px; transition: border-color var(--trans), background var(--trans); }
-.rad-row:hover { border-color: var(--border-subtle); background: #1a222d; }
+.rad-row:hover { border-color: var(--border-subtle); background: var(--surface-2); }
 .rad-row-main { gap: 5px; }
 .rad-row-title { font-weight: 700; }
 .rad-row-meta { line-height: 1.5; }
 .rad-badge { align-items: center; padding: 5px 9px; }
-.rad-modal-backdrop { background: #05080cd9; backdrop-filter: blur(6px); }
+.rad-modal-backdrop { background: #000000d9; backdrop-filter: blur(6px); }
 .rad-modal { padding: clamp(20px, 3vw, 32px); border-radius: 20px; box-shadow: 0 30px 100px #000b; }
 @media (max-width: 600px) { .rad-page { gap: 18px; } .rad-actions { width: auto; max-width: 100%; } }
 
@@ -71,16 +71,16 @@
 .rad-page { width: min(100%, 1240px); gap: 22px; }
 .rad-head h1 { font-weight: 650; letter-spacing: -.025em; }
 .rad-input, .rad-select, .rad-textarea { min-height: 38px; padding: 8px 10px; background: var(--surface); }
-.rad-input:focus, .rad-select:focus, .rad-textarea:focus { box-shadow: 0 0 0 2px #dbad6129; }
+.rad-input:focus, .rad-select:focus, .rad-textarea:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent); }
 .rad-button { min-height: 36px; padding: 7px 11px; background: transparent; font-weight: 550; }
 .rad-button:hover:not(:disabled) { background: var(--surface-2); }
-.rad-button.primary { color: #19150f; }
-.rad-button.primary:hover:not(:disabled) { background: #e6bc78; border-color: #e6bc78; color: #19150f; }
+.rad-button.primary { color: var(--accent-ink); }
+.rad-button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-ink); }
 .rad-button:active:not(:disabled) { transform: none; }
 .rad-panel { padding: 18px; box-shadow: none; }
 .rad-row { padding: 13px 15px; }
 .rad-row:hover { background: var(--surface); }
 .rad-badge { padding: 3px 7px; border-radius: var(--radius-sm); font-weight: 550; }
 .rad-empty { padding: 42px 20px; background: transparent; }
-.rad-modal-backdrop { background: #080a0dcc; backdrop-filter: none; }
+.rad-modal-backdrop { background: #000000cc; backdrop-filter: none; }
 .rad-modal { border-radius: var(--radius-lg); box-shadow: 0 22px 70px #0009; }

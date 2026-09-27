@@ -329,12 +329,12 @@
 
   @media (max-width: 720px) {
     .shell { display: block; }
-    .mobile-header { position: sticky; top: 0; z-index: 25; display: flex; align-items: center; gap: 13px; height: 62px; padding: 0 16px; border-bottom: 1px solid var(--border); background: #171b21; }
+    .mobile-header { position: sticky; top: 0; z-index: 25; display: flex; align-items: center; gap: 13px; height: 62px; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
     .mobile-header img { width: 122px; height: auto; }
     .mobile-current { min-width: 0; margin-left: auto; color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .menu-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); }
     .menu-button svg { width: 19px; height: 19px; }
-    .menu-backdrop { display: block; position: fixed; inset: 0; z-index: 29; width: 100%; border: 0; background: #05080cc9; }
+    .menu-backdrop { display: block; position: fixed; inset: 0; z-index: 29; width: 100%; border: 0; background: #000000c9; }
     .sidebar { display: flex; position: fixed; top: 0; bottom: 0; left: 0; width: min(290px, 84vw); height: 100dvh; visibility: hidden; transform: translateX(-105%); transition: transform 220ms var(--ease-out), visibility 220ms; box-shadow: 16px 0 48px #0008; }
     .sidebar.open { visibility: visible; transform: translateX(0); }
     .content { padding: 25px 16px 48px; min-height: calc(100dvh - 62px); }

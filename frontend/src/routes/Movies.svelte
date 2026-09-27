@@ -536,14 +536,14 @@
     margin-top: var(--space-2);
     padding: var(--space-2) var(--space-4);
     background: var(--accent);
-    color: #0d1017;
+    color: var(--accent-ink);
     font-size: var(--text-sm);
     font-weight: 600;
     border: none;
     border-radius: var(--radius-md);
     transition: background var(--trans);
   }
-  .retry-btn:hover { background: color-mix(in oklch, var(--accent) 85%, white); }
+  .retry-btn:hover { background: var(--accent-hover); }
 
   /* Skeletons */
   .skeleton .poster { aspect-ratio: 2 / 3; width: 100%; }

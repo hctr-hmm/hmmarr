@@ -81,22 +81,24 @@
 <style>
   :global(*, *::before, *::after) { box-sizing: border-box; margin: 0; padding: 0; }
   :global(:root) {
-    --bg:             #101318;
-    --surface:        #171b21;
-    --surface-2:      #20252d;
-    --surface-3:      #292f38;
-    --border:         #303740;
-    --border-subtle:  #424b55;
-    --text:           #e9e8e3;
-    --text-muted:     #a9adaf;
-    --text-faint:     #858d94;
-    --accent:         #dbad61;
-    --accent-dim:     #332b22;
-    --blue:           #81b9ce;
-    --green:          #8fc399;
-    --red:            #e69696;
-    --orange:         #dfa575;
-    --purple:         #afa4c7;
+    --bg:             #09090b;
+    --surface:        #111113;
+    --surface-2:      #19191c;
+    --surface-3:      #232327;
+    --border:         #29292e;
+    --border-subtle:  #3b3b43;
+    --text:           #e4e4e7;
+    --text-muted:     #a1a1aa;
+    --text-faint:     #8b8b94;
+    --accent:         #b7c7e8;
+    --accent-hover:   #cbd8f0;
+    --accent-ink:     #0b101a;
+    --accent-dim:     #202737;
+    --blue:           #93b5de;
+    --green:          #8bbf9f;
+    --red:            #e4939a;
+    --orange:         #cfa67e;
+    --purple:         #b3a1d1;
     --radius-sm:      3px;
     --radius-md:      5px;
     --radius-lg:      8px;
