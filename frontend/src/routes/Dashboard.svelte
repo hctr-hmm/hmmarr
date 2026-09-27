@@ -282,6 +282,8 @@
     <span><strong>{loaded ? alerts.length : '—'}</strong> issues</span>
   </div>
 
+  <div class="dashboard-layout">
+  <div class="dashboard-main">
   <section class="section" aria-labelledby="services-heading">
     <div class="section-head"><h2 id="services-heading">Services</h2><span>Live counts from connected apps</span></div>
     <div class="service-list">
@@ -329,6 +331,7 @@
   </section>
   {/if}
 
+  </div>
   <div class="lower-grid">
     <section class="panel" aria-labelledby="attention-heading">
       <div class="panel-head">
@@ -379,14 +382,15 @@
       {/if}
     </section>
   </div>
+  </div>
 </div>
 
 <style>
-  .page { width: min(100%, 1240px); margin: 0 auto; display: grid; gap: 34px; }
+  .page { width: min(100%, 1240px); margin: 0 auto; display: grid; gap: 28px; }
   .page-head, .section-head, .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-  .title { color: var(--text); font-size: var(--text-xl); font-weight: 650; letter-spacing: -.03em; }
+  .title { line-height: 1.2; color: var(--text); font-size: var(--text-xl); font-weight: 650; letter-spacing: -.03em; }
   .subtitle { margin-top: 6px; color: var(--text-muted); font-size: var(--text-sm); }
-  .refresh-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: transparent; color: var(--text-muted); font-size: var(--text-sm); }
+  .refresh-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text); font-size: 13px; line-height: 20px; }
   .refresh-btn:hover:not(:disabled), .panel-head button:hover, .service-open:hover { color: var(--text); border-color: var(--border-subtle); }
   .refresh-btn:disabled { opacity: .6; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -396,33 +400,41 @@
   .overview-line span { display: inline-flex; align-items: baseline; gap: 6px; padding: 0 22px; border-left: 1px solid var(--border); color: var(--text-muted); font-size: var(--text-sm); }
   .overview-line span:first-child { padding-left: 0; border-left: 0; }
   .overview-line strong { color: var(--text); font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .dashboard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; align-items: start; }
+  .dashboard-main { display: grid; min-width: 0; gap: 28px; }
   .section { display: grid; gap: 14px; }
   .section-head { align-items: baseline; }
-  .section-head h2, .panel-head h2 { color: var(--text); font-size: 17px; font-weight: 650; letter-spacing: -.02em; }
+  .section-head h2, .panel-head h2 { color: var(--text); font-size: 15px; font-weight: 650; letter-spacing: -.02em; }
   .section-head span, .panel-head p { color: var(--text-muted); font-size: 12px; }
   .panel-head p { margin-top: 4px; }
-  .service-list { border-top: 1px solid var(--border); }
-  .service-row { display: grid; grid-template-columns: 150px 116px minmax(0, 1fr) 56px; align-items: center; gap: 16px; min-height: 75px; padding: 12px 2px; border-bottom: 1px solid var(--border); }
+  .service-list { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+  .service-row:last-child { border-bottom: 0; }
+  .service-row { display: grid; grid-template-columns: 105px 65px minmax(0, 1fr) 40px; align-items: center; gap: 12px; min-height: 80px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
   .service-row.unconfigured { opacity: .7; }
   .service-name { display: grid; gap: 4px; min-width: 0; }
   .service-name h3 { color: var(--text); font-size: 14px; font-weight: 650; }
   .service-name span { color: var(--text-faint); font-size: 11px; white-space: nowrap; }
-  .state { display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+  .state { display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); font-size: 12px; line-height: 1.4; }
   .state.good { color: var(--green); }
   .state.bad { color: var(--red); }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .metric { min-width: 0; padding: 5px 0; border: 0; background: none; color: var(--text); text-align: left; white-space: nowrap; }
   .metric:hover strong, .metric:hover span { color: var(--accent); }
-  .metric strong { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
-  .metric span { margin-left: 3px; color: var(--text-muted); font-size: 11px; }
+  .metric strong { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .metric span { display: block; margin-top: 4px; white-space: normal; color: var(--text-muted); font-size: 11px; }
   .service-message { min-width: 0; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
   .error-text { color: var(--red); }
   .service-open, .panel-head button { padding: 4px 0; border: 0; background: none; color: var(--text-muted); font-size: 12px; text-align: right; white-space: nowrap; }
   .service-open span, .panel-head button span { margin-left: 2px; }
   .service-partial { grid-column: 3 / 4; margin-top: -10px; color: var(--orange); font-size: 11px; }
   .panel { display: grid; align-content: start; gap: 13px; min-width: 0; padding-top: 17px; border-top: 1px solid var(--border); }
-  .lower-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+  .lower-grid { display: grid; gap: 28px; }
+  .lower-grid .panel { padding-top: 0; border-top: 0; }
+  .lower-grid .panel-head { flex-wrap: wrap; gap: 6px; }
+  .lower-grid .panel-head p { line-height: 1.5; }
+  .lower-grid .panel-head button { text-align: left; }
+  .lower-grid .list, .lower-grid .empty { border-top: 1px solid var(--border); }
   .empty { padding: 15px 0; color: var(--text-muted); font-size: var(--text-sm); }
   .list { display: grid; }
   .list-row, .event-row, .watch-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
@@ -440,8 +452,26 @@
   .event-row { width: 100%; align-items: center; border-right: 0; border-bottom: 0; border-left: 0; background: none; color: var(--text-muted); text-align: left; }
   .event-row:hover strong { color: var(--accent); }
   .event-date { flex: 0 0 78px; color: var(--text-muted); font-size: 12px; font-weight: 600; }
-  @media (max-width: 1050px) { .service-row { grid-template-columns: 110px 98px minmax(0, 1fr) 40px; gap: 10px; } .metric span { display: block; margin-left: 0; white-space: normal; } }
-  @media (max-width: 800px) { .lower-grid, .watch-list { grid-template-columns: 1fr; } }
-  @media (max-width: 700px) { .service-row { grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 14px 0; } .service-name { grid-column: 1; } .state { grid-column: 2; justify-self: end; } .metrics, .service-message { grid-column: 1 / -1; } .service-open { grid-column: 2; grid-row: 3; justify-self: end; } .service-row .metrics { grid-row: 2; } .service-row .service-message { grid-row: 2; } .service-partial { grid-column: 1 / -1; margin-top: 0; } .section-head span { display: none; } }
-  @media (max-width: 470px) { .page { gap: 26px; } .page-head { align-items: flex-start; } .overview-line span { padding: 0 12px; font-size: 11px; } .overview-line strong { font-size: 18px; } .metric strong { font-size: 14px; } }
+  @media (max-width: 1250px) {
+    .dashboard-layout { grid-template-columns: 1fr; }
+    .lower-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .service-row { grid-template-columns: 120px 85px minmax(0, 1fr) 40px; }
+  }
+  @media (max-width: 850px) {
+    .service-row { grid-template-columns: 95px 65px minmax(0, 1fr) 36px; gap: 10px; padding: 12px; }
+    .metric strong { font-size: 15px; }
+    .lower-grid, .watch-list { grid-template-columns: 1fr; }
+    .section-head span { display: none; }
+  }
+  @media (max-width: 550px) {
+    .page { gap: 24px; }
+    .service-row { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 16px; }
+    .service-name { grid-column: 1; }
+    .state { grid-column: 2; justify-self: end; }
+    .metrics, .service-message { grid-column: 1 / -1; grid-row: 2; }
+    .service-open { grid-column: 2; grid-row: 3; justify-self: end; }
+    .service-partial { grid-column: 1 / -1; margin-top: 0; }
+    .overview-line span { padding: 0 12px; font-size: 11px; }
+    .overview-line strong { font-size: 18px; }
+  }
 </style>

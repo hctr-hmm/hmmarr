@@ -110,7 +110,7 @@
     --text-sm:   0.9rem;
     --text-base: 1rem;
     --text-lg:   1.25rem;
-    --text-xl:   clamp(1.65rem, 1.4rem + 1vw, 2rem);
+    --text-xl:   28px;
     --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
     --trans: 160ms var(--ease-out);
   }
